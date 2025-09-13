@@ -13,10 +13,11 @@
 
 ## 📖 文件
 
-- 📋 [完整使用指南](docs/USER_GUIDE.md) - 詳細的安裝、配置和使用說明
-- 🔧 [API 參考](docs/USER_GUIDE.md#api-參考) - 所有 MCP 工具的詳細文件
-- 🛡️ [安全配置](docs/USER_GUIDE.md#安全配置) - 安全最佳實務和配置指南
-- 🚀 [部署指南](docs/USER_GUIDE.md#docker-部署) - Docker 和本地部署說明
+- 📚 [文件中心](docs/README.md) - 完整的文件導覽和快速導引
+- 🚀 [MCP Server 完整使用手冊](docs/MCP_SERVER_HANDBOOK.md) - 從入門到進階的一站式指南
+- 📋 [使用者指南](docs/guides/USER_GUIDE.md) - 技術細節和 API 參考
+- 🛡️ [安全配置](docs/MCP_SERVER_HANDBOOK.md#安全與最佳實務) - 安全最佳實務
+- 🚀 [部署指南](docs/MCP_SERVER_HANDBOOK.md#部署與維運) - 生產部署說明
 
 ## 📋 系統需求
 
@@ -33,8 +34,11 @@
 git clone <repository-url>
 cd postgresql-mcp-server
 
-# 啟動所有服務
-./scripts/deploy.sh
+# 複製並編輯配置檔案
+cp .env.example .env
+
+# 啟動所有服務 (使用新的檔案路徑)
+docker-compose -f deployment/docker/docker-compose.yml up -d
 
 # 查看服務狀態
 ./scripts/deploy.sh status

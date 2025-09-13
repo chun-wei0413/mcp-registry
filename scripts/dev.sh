@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # Configuration
 PROJECT_NAME="postgresql-mcp-server-dev"
-COMPOSE_FILE="docker-compose.dev.yml"
+COMPOSE_FILE="deployment/docker/docker-compose.dev.yml"
 ENV_FILE=".env"
 
 log_info() {

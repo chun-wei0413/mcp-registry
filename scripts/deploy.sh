@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_NAME="postgresql-mcp-server"
 DOCKER_IMAGE="${PROJECT_NAME}:latest"
-COMPOSE_FILE="docker-compose.yml"
+COMPOSE_FILE="deployment/docker/docker-compose.yml"
 ENV_FILE=".env"
 
 # Functions
@@ -75,7 +75,7 @@ setup_environment() {
 build_image() {
     log_info "Building Docker image..."
 
-    docker build -t "$DOCKER_IMAGE" .
+    docker build -f deployment/docker/Dockerfile -t "$DOCKER_IMAGE" .
 
     log_success "Docker image built successfully"
 }

@@ -4,8 +4,8 @@ services:
   # Development PostgreSQL MCP Server with hot reload
   mcp-server-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
@@ -37,10 +37,10 @@ services:
       postgres-dev:
         condition: service_healthy
     volumes:
-      - ./src:/app/src:rw
-      - ./tests:/app/tests:rw
-      - ./logs:/app/logs:rw
-      - ./.env:/app/.env:ro
+      - ../../src:/app/src:rw
+      - ../../tests:/app/tests:rw
+      - ../../logs:/app/logs:rw
+      - ../../.env:/app/.env:ro
     command: ["python", "-m", "watchdog", "auto-restart", "--", "python", "-m", "src.server"]
     networks:
       - mcp-dev-network
@@ -57,7 +57,7 @@ services:
       - "5433:5432"  # Different port to avoid conflicts
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
-      - ./init-db-dev.sql:/docker-entrypoint-initdb.d/init-db-dev.sql:ro
+      - ../db/init-db-dev.sql:/docker-entrypoint-initdb.d/init-db-dev.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mcp_dev_user -d mcp_dev"]
       interval: 5s
@@ -77,7 +77,7 @@ services:
     ports:
       - "5434:5432"  # Different port for testing
     volumes:
-      - ./init-db-test.sql:/docker-entrypoint-initdb.d/init-db-test.sql:ro
+      - ../db/init-db-test.sql:/docker-entrypoint-initdb.d/init-db-test.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mcp_test_user -d mcp_test"]
       interval: 5s
