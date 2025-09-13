@@ -7,16 +7,18 @@ from typing import Any, Dict, List, Optional
 import structlog
 import asyncpg
 
-from ..models.types import QueryResult, TransactionResult, BatchResult
+from ..models.types import QueryResult, TransactionResult, BatchResult, SecurityConfig
 from .connection import ConnectionManager
+from ..security import SecurityValidator
 
 logger = structlog.get_logger()
 
 class QueryTool:
     """查詢執行工具"""
-    
-    def __init__(self, connection_manager: ConnectionManager):
+
+    def __init__(self, connection_manager: ConnectionManager, security_config: Optional[SecurityConfig] = None):
         self.connection_manager = connection_manager
+        self.security_validator = SecurityValidator(security_config or SecurityConfig())
     
     async def execute_query(
         self,
@@ -27,7 +29,17 @@ class QueryTool:
     ) -> QueryResult:
         """執行 SELECT 查詢"""
         start_time = time.time()
-        
+
+        # 安全性驗證
+        security_result = self.security_validator.validate_query(query)
+        if not security_result.is_valid:
+            return QueryResult(
+                success=False,
+                error=security_result.error_message,
+                query=query,
+                duration_ms=0
+            )
+
         try:
             pool = await self.connection_manager.get_pool(connection_id)
             if not pool:
@@ -37,13 +49,13 @@ class QueryTool:
                     query=query,
                     duration_ms=0
                 )
-            
-            # 檢查查詢類型，只允許 SELECT 和 WITH
+
+            # 額外檢查：execute_query 只允許 SELECT、WITH 和 EXPLAIN
             query_upper = query.strip().upper()
-            if not (query_upper.startswith('SELECT') or query_upper.startswith('WITH')):
+            if not (query_upper.startswith('SELECT') or query_upper.startswith('WITH') or query_upper.startswith('EXPLAIN')):
                 return QueryResult(
                     success=False,
-                    error="Only SELECT and WITH queries are allowed",
+                    error="Only SELECT, WITH, and EXPLAIN queries are allowed in execute_query",
                     query=query,
                     duration_ms=0
                 )
@@ -104,7 +116,20 @@ class QueryTool:
         start_time = time.time()
         results = []
         rolled_back = False
-        
+
+        # 預先驗證所有查詢的安全性
+        for i, query_info in enumerate(queries):
+            query = query_info.get('query', '')
+            security_result = self.security_validator.validate_query(query)
+            if not security_result.is_valid:
+                return TransactionResult(
+                    success=False,
+                    error=f"Query {i+1} security validation failed: {security_result.error_message}",
+                    results=[],
+                    rolled_back=False,
+                    duration_ms=0
+                )
+
         try:
             pool = await self.connection_manager.get_pool(connection_id)
             if not pool:
@@ -202,13 +227,25 @@ class QueryTool:
     ) -> BatchResult:
         """批次執行相同查詢，不同參數"""
         start_time = time.time()
-        
+
+        # 安全性驗證
+        security_result = self.security_validator.validate_query(query)
+        if not security_result.is_valid:
+            return BatchResult(
+                success=False,
+                error=security_result.error_message,
+                batch_size=len(params_list),
+                total_affected_rows=0,
+                duration_ms=0
+            )
+
         try:
             pool = await self.connection_manager.get_pool(connection_id)
             if not pool:
                 return BatchResult(
                     success=False,
                     error="Connection not found",
+                    batch_size=len(params_list),
                     total_affected_rows=0,
                     duration_ms=0
                 )

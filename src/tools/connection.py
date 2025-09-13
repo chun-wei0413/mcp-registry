@@ -9,18 +9,20 @@ import structlog
 from cryptography.fernet import Fernet
 import os
 
-from ..models.types import ConnectionInfo, ConnectionResult, ConnectionStatus
+from ..models.types import ConnectionInfo, ConnectionResult, ConnectionStatus, SecurityConfig
 from ..db.pool import ConnectionPool
+from ..security import SecurityValidator
 
 logger = structlog.get_logger()
 
 class ConnectionManager:
     """管理資料庫連線"""
-    
-    def __init__(self):
+
+    def __init__(self, security_config: Optional[SecurityConfig] = None):
         self.pools: Dict[str, ConnectionPool] = {}
         self.connections: Dict[str, ConnectionInfo] = {}
         self._cipher_key = self._get_or_create_key()
+        self.security_validator = SecurityValidator(security_config or SecurityConfig())
         
     def _get_or_create_key(self) -> bytes:
         """取得或建立加密金鑰"""
@@ -53,6 +55,17 @@ class ConnectionManager:
     ) -> ConnectionResult:
         """建立新的資料庫連線"""
         try:
+            # 安全性驗證連線參數
+            security_result = self.security_validator.validate_connection_params(
+                host, port, database, user
+            )
+            if not security_result.is_valid:
+                return ConnectionResult(
+                    connection_id=connection_id,
+                    success=False,
+                    message=f"Connection security validation failed: {security_result.error_message}"
+                )
+
             # 測試連線
             test_conn = await asyncpg.connect(
                 host=host,

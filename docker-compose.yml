@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # PostgreSQL MCP Server
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Server Configuration
+      - MCP_SERVER_PORT=3000
+      - MCP_LOG_LEVEL=INFO
+      - DEFAULT_POOL_SIZE=10
+      - QUERY_TIMEOUT=30
+      - MAX_CONNECTIONS=100
+      - ENABLE_QUERY_CACHE=false
+      - CACHE_TTL_SECONDS=300
+
+      # Security Configuration
+      - POSTGRES_MCP_ENCRYPTION_KEY=your-encryption-key-change-this
+      - READONLY_MODE=false
+      - ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN
+      - BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER
+      - MAX_QUERY_LENGTH=10000
+      - ENABLE_QUERY_LOGGING=true
+
+      # Database Connection
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=mcp_test
+      - DB_USER=mcp_user
+      - DB_PASSWORD=mcp_password
+      - DB_POOL_SIZE=10
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs:rw
+    networks:
+      - mcp-network
+
+  # PostgreSQL Database for testing
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=mcp_test
+      - POSTGRES_USER=mcp_user
+      - POSTGRES_PASSWORD=mcp_password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d mcp_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # PostgreSQL Admin Interface (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - mcp-network
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge

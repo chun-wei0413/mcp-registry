@@ -1,0 +1,50 @@
+# Development Dockerfile for PostgreSQL MCP Server
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for development
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    git \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY pyproject.toml ./
+
+# Install Python dependencies including development tools
+RUN pip install --no-cache-dir -e .[dev,test] && \
+    pip install --no-cache-dir watchdog[watchmedo]
+
+# Copy source code and configuration
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY .env.example .env
+
+# Create directories for logs and data
+RUN mkdir -p logs data
+
+# Expose ports
+EXPOSE 3000
+
+# Development health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.path.append('/app'); from src.monitoring import HealthChecker; from src.tools.connection import ConnectionManager; from src.models.types import SecurityConfig; hc = HealthChecker(ConnectionManager(SecurityConfig())); print('Dev health check passed')"
+
+# Development command with auto-reload
+CMD ["watchmedo", "auto-restart", "--directory=./src", "--pattern=*.py", "--recursive", "--", "python", "-m", "src.server"]
+
+# Metadata
+LABEL maintainer="FrankLi <a910413frank@gmail.com>" \
+      description="PostgreSQL MCP Server - Development Environment" \
+      version="0.1.0-dev"

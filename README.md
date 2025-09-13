@@ -1,169 +1,234 @@
 # PostgreSQL MCP Server
 
-一個通用的 PostgreSQL MCP Server，作為純工具層，讓 LLM 能透過 MCP 協定執行智能資料操作。
+一個通用的 PostgreSQL MCP Server，為 LLM 提供智能資料庫操作能力。此 Server 作為純工具層，不包含任何業務邏輯，所有智能決策由 LLM 根據 Context 自主完成。
 
-## 特色
+## 🚀 特性
 
-- 🔧 **純工具層**: 不包含業務邏輯，所有智能決策由 LLM 完成
-- 🚀 **異步處理**: 全異步 I/O，支援高並發查詢
-- 🔒 **安全性**: SQL 注入防護、密碼加密、權限控制
-- 📊 **完整功能**: 查詢、事務、批次操作、Schema 檢查
-- 🎯 **高性能**: 連線池管理、查詢優化
-- 📝 **可觀測性**: 結構化日誌、查詢歷史
+- **🔒 安全性第一**: 參數化查詢、SQL 注入防護、危險操作阻擋
+- **⚡ 高效能**: 異步連線池、批次操作、查詢快取
+- **🔍 可觀測性**: 結構化日誌、健康檢查、效能監控
+- **🛡️ 安全配置**: 只讀模式、操作白名單、查詢長度限制
+- **🔧 易於部署**: Docker 支援、環境配置、一鍵部署
+- **🧪 完整測試**: 單元測試、整合測試、安全測試
 
-## 安裝
+## 📋 系統需求
 
-```bash
-# 從 PyPI 安裝（未來）
-pip install postgresql-mcp-server
+- Python 3.11+
+- PostgreSQL 12+
+- Docker & Docker Compose (可選)
 
-# 或從原始碼安裝
-git clone https://github.com/chun-wei0413/pg-mcp.git
-cd pg-mcp
-pip install -e .
-```
+## 🔧 快速開始
 
-## 快速開始
-
-### 1. 啟動 MCP Server
+### 使用 Docker (推薦)
 
 ```bash
-postgresql-mcp-server
+# 克隆專案
+git clone <repository-url>
+cd postgresql-mcp-server
+
+# 啟動所有服務
+./scripts/deploy.sh
+
+# 查看服務狀態
+./scripts/deploy.sh status
 ```
 
-### 2. 基本使用流程
+### 本地開發
 
-```python
-# 1. 建立連線
-await add_connection(
-    connection_id="my_db",
-    host="localhost",
-    port=5432,
-    database="myapp",
-    user="postgres",
-    password="password"
-)
+```bash
+# 安裝依賴
+pip install -e .[dev,test]
 
-# 2. 查看表結構
-schema = await get_table_schema("my_db", "users")
+# 複製配置檔案
+cp .env.example .env
+# 編輯 .env 設定資料庫連線
 
-# 3. 執行查詢
-result = await execute_query(
-    "my_db",
-    "SELECT * FROM users WHERE created_at > $1",
-    ["2024-01-01"]
-)
+# 啟動開發環境
+./scripts/dev.sh start
 
-# 4. 執行事務
-await execute_transaction("my_db", [
-    {
-        "query": "INSERT INTO users (name, email) VALUES ($1, $2)",
-        "params": ["John Doe", "john@example.com"]
-    },
-    {
-        "query": "UPDATE user_stats SET total_users = total_users + 1",
-        "params": []
-    }
-])
+# 運行測試
+python run_tests.py all
 ```
 
-## MCP 工具
-
-### 連線管理
-
-- `add_connection`: 建立資料庫連線
-- `test_connection`: 測試連線狀態
-
-### 查詢執行
-
-- `execute_query`: 執行 SELECT 查詢
-- `execute_transaction`: 事務中執行多個查詢
-- `batch_execute`: 批次執行相同查詢
-
-### Schema 檢查
-
-- `get_table_schema`: 獲取表結構詳情
-- `list_tables`: 列出所有表
-- `explain_query`: 分析查詢執行計畫
-
-## MCP 資源
-
-- `connections`: 所有活躍連線資訊
-- `query_history`: 查詢歷史記錄
-
-## 配置
+## ⚙️ 配置
 
 ### 環境變數
 
 ```bash
+# 伺服器配置
 MCP_SERVER_PORT=3000
 MCP_LOG_LEVEL=INFO
 DEFAULT_POOL_SIZE=10
 QUERY_TIMEOUT=30
-POSTGRES_MCP_ENCRYPTION_KEY=your-secret-key
+
+# 安全配置
+READONLY_MODE=false
+ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE
+BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER
+MAX_QUERY_LENGTH=10000
+
+# 資料庫連線
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=your_database
+DB_USER=your_username
+DB_PASSWORD=your_password
 ```
 
-### 連線池配置
+### 安全模式
 
-- 最小連線數: 2
-- 最大連線數: 20
-- 連線超時: 30秒
+#### 只讀模式
+```bash
+READONLY_MODE=true
+ALLOWED_OPERATIONS=SELECT,WITH,EXPLAIN
+```
 
-## 安全性
+#### 生產安全配置
+```bash
+BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER,CREATE,GRANT,REVOKE
+MAX_QUERY_LENGTH=5000
+ENABLE_QUERY_LOGGING=true
+```
 
-- ✅ 參數化查詢防止 SQL 注入
-- ✅ 密碼加密儲存
-- ✅ 連線池管理
-- ✅ 查詢超時控制
-- ✅ 錯誤資訊過濾
+## 🛠️ MCP 工具
 
-## 開發
+### 連線管理
+- `add_connection` - 建立資料庫連線
+- `test_connection` - 測試連線狀態
 
-### 安裝開發依賴
+### 查詢執行
+- `execute_query` - 執行 SELECT 查詢
+- `execute_transaction` - 事務執行
+- `batch_execute` - 批次操作
+
+### Schema 檢查
+- `get_table_schema` - 獲取表結構
+- `list_tables` - 列出所有表
+- `explain_query` - 查詢執行計畫
+
+### 監控工具
+- `health_check` - 健康檢查
+- `get_metrics` - 伺服器指標
+
+## 🔍 使用範例
+
+### 建立連線
+```python
+await add_connection(
+    connection_id="main_db",
+    host="localhost",
+    port=5432,
+    database="myapp",
+    user="myuser",
+    password="mypassword"
+)
+```
+
+### 執行查詢
+```python
+result = await execute_query(
+    connection_id="main_db",
+    query="SELECT * FROM users WHERE created_at > $1",
+    params=["2024-01-01"]
+)
+```
+
+### 事務操作
+```python
+await execute_transaction(
+    connection_id="main_db",
+    queries=[
+        {"query": "INSERT INTO orders (user_id, total) VALUES ($1, $2)", "params": [1, 100.50]},
+        {"query": "UPDATE inventory SET stock = stock - $1 WHERE id = $2", "params": [1, 123]}
+    ]
+)
+```
+
+## 🧪 測試
 
 ```bash
-pip install -e ".[dev]"
+# 運行所有測試
+python run_tests.py all
+
+# 運行特定測試
+python run_tests.py unit
+python run_tests.py integration
+
+# 生成覆蓋率報告
+python run_tests.py coverage
+
+# 代碼檢查
+python run_tests.py lint
+
+# 修復格式
+python run_tests.py fix
 ```
 
-### 執行測試
+## 🐳 Docker 部署
 
+### 生產部署
 ```bash
-pytest
+./scripts/deploy.sh deploy
 ```
 
-### 程式碼格式化
-
+### 開發環境
 ```bash
-black src tests
-ruff check src tests
+./scripts/dev.sh start
 ```
 
-### 型別檢查
-
+### 查看日誌
 ```bash
-mypy src
+./scripts/deploy.sh logs mcp-server
+./scripts/dev.sh logs postgres-dev
 ```
 
-## Docker 支援
+## 📊 監控
 
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY . .
-RUN pip install -e .
-CMD ["postgresql-mcp-server"]
+### 健康檢查
+```bash
+curl http://localhost:3000/health
 ```
 
-## 授權
+### 指標查詢
+```bash
+curl http://localhost:3000/metrics
+```
 
-MIT License
+### 服務狀態
+```bash
+./scripts/deploy.sh status
+```
 
-## 貢獻
+## 🛡️ 安全最佳實務
 
-歡迎提交 Issue 和 Pull Request！
+1. **永遠使用參數化查詢**
+2. **定期更新依賴**
+3. **啟用查詢日誌記錄**
+4. **使用最小權限原則**
+5. **定期審核安全配置**
 
-## 相關資源
+## 🔄 版本歷史
 
-- [MCP 官方文件](https://modelcontextprotocol.io/)
-- [asyncpg 文件](https://magicstack.github.io/asyncpg/)
-- [PostgreSQL 文件](https://www.postgresql.org/docs/)
+- **v0.1.0** - 初始版本
+  - 基本 MCP 工具實現
+  - 安全驗證機制
+  - Docker 部署支援
+  - 完整測試套件
+
+## 📄 授權
+
+此專案使用 MIT 授權 - 詳見 [LICENSE](LICENSE) 檔案
+
+## 🤝 支援
+
+- 📧 Email: a910413frank@gmail.com
+- 🐛 Issues: [GitHub Issues](../../issues)
+- 💬 Discussions: [GitHub Discussions](../../discussions)
+
+## 🙏 致謝
+
+感謝所有貢獻者和開源社群的支持！
+
+---
+
+**注意**: 這是一個純工具層的 MCP Server，設計用於與 LLM 配合進行智能資料遷移和資料庫操作。請確保在生產環境中正確配置安全設定。

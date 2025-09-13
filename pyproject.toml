@@ -27,6 +27,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "structlog>=23.0.0",
     "python-dotenv>=1.0.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.optional-dependencies]
@@ -47,7 +48,7 @@ test = [
 ]
 
 [project.scripts]
-postgresql-mcp-server = "postgresql_mcp_server.server:main"
+postgresql-mcp-server = "src.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

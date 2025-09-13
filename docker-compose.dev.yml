@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Development PostgreSQL MCP Server with hot reload
+  mcp-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Server Configuration (Development)
+      - MCP_SERVER_PORT=3000
+      - MCP_LOG_LEVEL=DEBUG
+      - DEFAULT_POOL_SIZE=5
+      - QUERY_TIMEOUT=30
+      - MAX_CONNECTIONS=20
+      - ENABLE_QUERY_CACHE=false
+      - CACHE_TTL_SECONDS=60
+
+      # Security Configuration (Development - More Permissive)
+      - POSTGRES_MCP_ENCRYPTION_KEY=dev-encryption-key-not-secure
+      - READONLY_MODE=false
+      - ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN
+      - BLOCKED_KEYWORDS=DROP,TRUNCATE
+      - MAX_QUERY_LENGTH=50000
+      - ENABLE_QUERY_LOGGING=true
+
+      # Database Connection
+      - DB_HOST=postgres-dev
+      - DB_PORT=5432
+      - DB_DATABASE=mcp_dev
+      - DB_USER=mcp_dev_user
+      - DB_PASSWORD=mcp_dev_password
+      - DB_POOL_SIZE=5
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:rw
+      - ./tests:/app/tests:rw
+      - ./logs:/app/logs:rw
+      - ./.env:/app/.env:ro
+    command: ["python", "-m", "watchdog", "auto-restart", "--", "python", "-m", "src.server"]
+    networks:
+      - mcp-dev-network
+
+  # Development PostgreSQL Database
+  postgres-dev:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=mcp_dev
+      - POSTGRES_USER=mcp_dev_user
+      - POSTGRES_PASSWORD=mcp_dev_password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-db-dev.sql:/docker-entrypoint-initdb.d/init-db-dev.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_dev_user -d mcp_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - mcp-dev-network
+
+  # Test PostgreSQL Database
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=mcp_test
+      - POSTGRES_USER=mcp_test_user
+      - POSTGRES_PASSWORD=mcp_test_password
+    ports:
+      - "5434:5432"  # Different port for testing
+    volumes:
+      - ./init-db-test.sql:/docker-entrypoint-initdb.d/init-db-test.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_test_user -d mcp_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mcp-dev-network
+    tmpfs:
+      - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
+
+  # Redis for caching (development)
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - mcp-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  mcp-dev-network:
+    driver: bridge
