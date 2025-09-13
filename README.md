@@ -11,6 +11,13 @@
 - **🔧 易於部署**: Docker 支援、環境配置、一鍵部署
 - **🧪 完整測試**: 單元測試、整合測試、安全測試
 
+## 📖 文件
+
+- 📋 [完整使用指南](docs/USER_GUIDE.md) - 詳細的安裝、配置和使用說明
+- 🔧 [API 參考](docs/USER_GUIDE.md#api-參考) - 所有 MCP 工具的詳細文件
+- 🛡️ [安全配置](docs/USER_GUIDE.md#安全配置) - 安全最佳實務和配置指南
+- 🚀 [部署指南](docs/USER_GUIDE.md#docker-部署) - Docker 和本地部署說明
+
 ## 📋 系統需求
 
 - Python 3.11+
@@ -225,9 +232,6 @@ curl http://localhost:3000/metrics
 - 🐛 Issues: [GitHub Issues](../../issues)
 - 💬 Discussions: [GitHub Discussions](../../discussions)
 
-## 🙏 致謝
-
-感謝所有貢獻者和開源社群的支持！
 
 ---
 
