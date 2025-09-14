@@ -1,45 +1,4 @@
-"""
-Security Validation Module
-
-SPECIFICATION:
-This module provides comprehensive security validation for all database operations
-in the PostgreSQL MCP Server. It implements multiple layers of security controls
-to prevent SQL injection, unauthorized operations, and data breaches.
-
-CORE SECURITY FEATURES:
-- SQL Injection Prevention: Validates all queries for malicious patterns
-- Operation Filtering: Controls which SQL operations are allowed
-- Query Validation: Enforces query length limits and content restrictions
-- Connection Security: Validates database connection parameters
-- Access Control: Implements readonly mode and operation whitelists
-- Audit Logging: Tracks all security validations and blocked operations
-
-VALIDATION LAYERS:
-1. Syntax Validation: Checks for valid SQL syntax and structure
-2. Operation Validation: Ensures only allowed SQL operations are executed
-3. Content Validation: Scans for dangerous keywords and patterns
-4. Parameter Validation: Validates query parameters and connection strings
-5. Length Validation: Enforces maximum query and parameter lengths
-
-SECURITY CONTROLS:
-- Readonly Mode: Restricts all operations to read-only queries
-- Operation Whitelist: Configurable list of allowed SQL operations
-- Keyword Blacklist: Blocks queries containing dangerous SQL keywords
-- Query Length Limits: Prevents excessively long queries
-- Parameter Sanitization: Validates and sanitizes all input parameters
-
-THREAT MITIGATION:
-- SQL Injection: Multi-layer injection detection and prevention
-- Data Exfiltration: Query monitoring and access control
-- Unauthorized Modifications: Write operation restrictions
-- Denial of Service: Query complexity and resource limits
-- Privilege Escalation: Connection parameter validation
-
-USAGE PATTERN:
-The SecurityValidator is used throughout the server to validate all
-database operations before execution. It provides both synchronous
-validation methods and detailed security violation reporting.
-"""
+"""Security validation for PostgreSQL MCP Server."""
 
 import re
 from typing import List, Optional, Set

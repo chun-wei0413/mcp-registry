@@ -1,48 +1,4 @@
-"""
-Database Connection Pool Management
-
-SPECIFICATION:
-This module provides efficient PostgreSQL connection pool management for the
-MCP Server. It implements async connection pooling with automatic connection
-lifecycle management, health monitoring, and performance optimization.
-
-CORE FUNCTIONALITY:
-- Async Connection Pooling: High-performance asyncpg connection pools
-- Connection Lifecycle: Automatic creation, validation, and cleanup
-- Health Monitoring: Continuous connection health checking and recovery
-- Pool Optimization: Dynamic pool sizing and connection reuse
-- Error Recovery: Automatic retry and failover mechanisms
-- Resource Management: Efficient connection resource allocation
-
-CONNECTION POOL FEATURES:
-- Configurable Pool Size: Min/max connection limits per database
-- Connection Validation: Pre-use connection health verification
-- Timeout Management: Connection acquisition and query timeouts
-- Connection Reuse: Efficient connection sharing across requests
-- Auto-reconnection: Automatic recovery from connection failures
-- Pool Monitoring: Real-time pool utilization metrics
-
-PERFORMANCE OPTIMIZATIONS:
-- Connection Warming: Pre-established connections for faster response
-- Statement Caching: Prepared statement caching for repeated queries
-- Connection Affinity: Optimal connection allocation strategies
-- Resource Pooling: Minimized connection overhead and resource usage
-- Lazy Loading: On-demand connection establishment
-- Graceful Shutdown: Clean connection termination on shutdown
-
-RELIABILITY FEATURES:
-- Connection Health Checks: Regular validation of pooled connections
-- Automatic Recovery: Transparent recovery from database disconnections
-- Circuit Breaker: Protection against cascading connection failures
-- Deadlock Prevention: Connection acquisition timeout protection
-- Resource Leak Prevention: Automatic connection cleanup and monitoring
-
-USAGE PATTERN:
-The ConnectionPool class manages the lifecycle of database connections
-for a single database. Multiple pools can be managed by the ConnectionManager
-for multi-database scenarios. Connections are acquired from the pool
-for query execution and automatically returned after use.
-"""
+"""Database connection pool management."""
 
 import asyncio
 from typing import Optional

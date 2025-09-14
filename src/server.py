@@ -1,40 +1,5 @@
 #!/usr/bin/env python3
-"""
-PostgreSQL MCP Server - Main Entry Point
-
-SPECIFICATION:
-This is the main MCP (Model Context Protocol) server entry point that provides
-a universal PostgreSQL interface for LLM applications. The server implements
-a pure tool layer architecture without any business logic, allowing LLM agents
-to perform intelligent database operations through standardized MCP tools.
-
-CORE ARCHITECTURE:
-- Pure Tool Layer: No business logic, all intelligence provided by LLM
-- Async Architecture: Full asyncio support for high-performance operations
-- Security-First: Built-in SQL injection protection, operation validation
-- Connection Pool: Efficient database connection management
-- Comprehensive Logging: Structured logging with query tracking
-- Resource Management: MCP resources for connections and query history
-
-PRIMARY COMPONENTS:
-1. MCP Tool Registration: Database operation tools (query, schema, connection)
-2. Resource Providers: Dynamic resources for connections and query history
-3. Security Layer: Query validation, operation filtering, access control
-4. Connection Management: Multi-database connection pool handling
-5. Monitoring Integration: Health checks and performance metrics
-6. Configuration Management: Environment-based configuration system
-
-TOOL CATEGORIES:
-- Connection Tools: add_connection, test_connection
-- Query Tools: execute_query, execute_transaction, batch_execute
-- Schema Tools: get_table_schema, list_tables, explain_query
-- Monitoring Tools: health_check, get_metrics
-
-USAGE PATTERN:
-The server is designed to be used by LLM clients through MCP protocol.
-LLMs provide the intelligence and decision-making, while this server
-provides the database access capabilities as standardized tools.
-"""
+"""PostgreSQL MCP Server - Main Entry Point with SOLID Architecture"""
 
 import asyncio
 import sys
@@ -51,48 +16,54 @@ from mcp.types import (
     LoggingLevel
 )
 
-from .tools.connection import ConnectionManager
-from .tools.query import QueryTool
-from .tools.schema import SchemaTool
-from .models.types import ConnectionInfo, QueryHistory, SecurityConfig
-from .config import ConfigManager
-from .monitoring import HealthChecker, MetricsCollector
+from .presentation import get_dependency_factory, cleanup_dependency_factory
+from .presentation.mcp_handlers import ConnectionHandler, QueryHandler
+from .core.interfaces import IHealthChecker, IMetricsCollector, ISchemaInspector
 
 logger = structlog.get_logger()
 
+
 class PostgreSQLMCPServer:
-    """PostgreSQL MCP Server implementation"""
+    """PostgreSQL MCP Server implementation with SOLID architecture."""
 
     def __init__(self, config_file: Optional[str] = None):
-        # 載入配置
-        self.config_manager = ConfigManager(config_file)
-        self.config_manager.setup_logging()
-
-        # 驗證配置
-        if not self.config_manager.validate_config():
-            raise ValueError("Invalid configuration")
-
-        self.config_manager.print_config_summary()
-
         self.app = FastMCP("PostgreSQL MCP Server")
-        self.server_config = self.config_manager.get_server_config()
-        self.security_config = self.config_manager.get_security_config()
-        self.connection_manager = ConnectionManager(self.security_config)
-        self.query_tool = QueryTool(self.connection_manager, self.security_config)
-        self.schema_tool = SchemaTool(self.connection_manager)
-        self.query_history: List[QueryHistory] = []
+        self._dependency_factory = None
+        self._connection_handler: ConnectionHandler = None
+        self._query_handler: QueryHandler = None
+        self._health_checker: IHealthChecker = None
+        self._metrics_collector: IMetricsCollector = None
+        self._schema_inspector: ISchemaInspector = None
 
-        # 初始化監控
-        self.health_checker = HealthChecker(self.connection_manager)
-        self.metrics_collector = MetricsCollector(self.connection_manager)
+    async def initialize(self):
+        """Initialize the server with dependency injection."""
+        try:
+            # Get dependency factory
+            self._dependency_factory = await get_dependency_factory()
 
-        # Register tools and resources
-        self._register_tools()
-        self._register_resources()
-        
+            # Initialize handlers
+            self._connection_handler = await self._dependency_factory.get_connection_handler()
+            self._query_handler = await self._dependency_factory.get_query_handler()
+
+            # Initialize monitoring components
+            self._health_checker = await self._dependency_factory.get_health_checker()
+            self._metrics_collector = await self._dependency_factory.get_metrics_collector()
+            self._schema_inspector = await self._dependency_factory.get_schema_inspector()
+
+            # Register tools and resources
+            self._register_tools()
+            self._register_resources()
+
+            logger.info("postgresql_mcp_server_initialized")
+
+        except Exception as e:
+            logger.error("server_initialization_failed", error=str(e))
+            raise
+
     def _register_tools(self):
-        """Register all MCP tools"""
-        
+        """Register all MCP tools using SOLID architecture handlers."""
+
+        # Connection Management Tools
         @self.app.tool()
         async def add_connection(
             connection_id: str,
@@ -104,214 +75,391 @@ class PostgreSQLMCPServer:
             pool_size: int = 10
         ):
             """建立資料庫連線"""
-            return await self.connection_manager.add_connection(
-                connection_id, host, port, database, user, password, pool_size
+            return await self._connection_handler.add_connection(
+                connection_id=connection_id,
+                host=host,
+                port=port,
+                database=database,
+                user=user,
+                password=password,
+                pool_size=pool_size
             )
-        
+
         @self.app.tool()
         async def test_connection(connection_id: str):
             """測試連線狀態"""
-            return await self.connection_manager.test_connection(connection_id)
-        
+            return await self._connection_handler.test_connection(connection_id)
+
+        @self.app.tool()
+        async def remove_connection(connection_id: str):
+            """移除資料庫連線"""
+            return await self._connection_handler.remove_connection(connection_id)
+
+        @self.app.tool()
+        async def list_connections():
+            """列出所有連線"""
+            return await self._connection_handler.list_connections()
+
+        @self.app.tool()
+        async def get_connection(connection_id: str):
+            """取得連線資訊"""
+            return await self._connection_handler.get_connection(connection_id)
+
+        # Query Execution Tools
         @self.app.tool()
         async def execute_query(
             connection_id: str,
             query: str,
-            params: Optional[List[Any]] = None,
-            fetch_size: Optional[int] = None
+            params: Optional[List[Any]] = None
         ):
-            """執行 SELECT 查詢"""
-            result = await self.query_tool.execute_query(
-                connection_id, query, params, fetch_size
+            """執行 SQL 查詢"""
+            return await self._query_handler.execute_query(
+                connection_id=connection_id,
+                query=query,
+                params=params
             )
 
-            # 記錄查詢歷史
-            self._add_query_history(
-                connection_id, query, params, result.success,
-                result.duration_ms, result.row_count if result.success else 0,
-                result.error
-            )
-
-            return result
-        
         @self.app.tool()
         async def execute_transaction(
             connection_id: str,
             queries: List[Dict[str, Any]]
         ):
             """在事務中執行多個查詢"""
-            result = await self.query_tool.execute_transaction(connection_id, queries)
-
-            # 記錄事務歷史
-            total_affected = sum(r.get('rows_affected', 0) for r in result.results if r.get('success'))
-            self._add_query_history(
-                connection_id, f"TRANSACTION ({len(queries)} queries)", None,
-                result.success, result.duration_ms, total_affected, result.error
+            return await self._query_handler.execute_transaction(
+                connection_id=connection_id,
+                queries=queries
             )
 
-            return result
-        
         @self.app.tool()
-        async def batch_execute(
+        async def execute_batch(
             connection_id: str,
             query: str,
             params_list: List[List[Any]]
         ):
             """批次執行相同查詢，不同參數"""
-            result = await self.query_tool.batch_execute(connection_id, query, params_list)
-
-            # 記錄批次歷史
-            self._add_query_history(
-                connection_id, f"BATCH: {query[:50]}...", None,
-                result.success, result.duration_ms, result.total_affected_rows, result.error
+            return await self._query_handler.execute_batch(
+                connection_id=connection_id,
+                query=query,
+                params_list=params_list
             )
 
-            return result
-        
+        # Schema Inspection Tools
         @self.app.tool()
         async def get_table_schema(
             connection_id: str,
             table_name: str,
-            schema: str = "public"
+            schema_name: str = "public"
         ):
             """獲取表結構詳情"""
-            return await self.schema_tool.get_table_schema(connection_id, table_name, schema)
-        
+            try:
+                schema = await self._schema_inspector.get_table_schema(
+                    connection_id=connection_id,
+                    table_name=table_name,
+                    schema_name=schema_name
+                )
+
+                return {
+                    "success": True,
+                    "table_name": schema.table_name,
+                    "schema_name": schema.schema_name,
+                    "columns": [
+                        {
+                            "name": col.name,
+                            "data_type": col.data_type,
+                            "is_nullable": col.is_nullable,
+                            "default_value": col.default_value,
+                            "max_length": col.max_length,
+                            "precision": col.precision,
+                            "scale": col.scale,
+                            "comment": col.comment
+                        }
+                        for col in schema.columns
+                    ],
+                    "indexes": [
+                        {
+                            "name": idx.name,
+                            "definition": idx.definition,
+                            "is_unique": idx.is_unique,
+                            "is_primary": idx.is_primary
+                        }
+                        for idx in schema.indexes
+                    ],
+                    "constraints": [
+                        {
+                            "name": const.name,
+                            "type": const.type,
+                            "column_name": const.column_name,
+                            "foreign_table": const.foreign_table,
+                            "foreign_column": const.foreign_column
+                        }
+                        for const in schema.constraints
+                    ],
+                    "row_count": schema.row_count,
+                    "table_size_bytes": schema.table_size_bytes
+                }
+
+            except Exception as e:
+                logger.error(
+                    "get_table_schema_tool_failed",
+                    connection_id=connection_id,
+                    table_name=f"{schema_name}.{table_name}",
+                    error=str(e)
+                )
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+
         @self.app.tool()
         async def list_tables(
             connection_id: str,
-            schema: str = "public"
+            schema_name: str = "public"
         ):
             """列出所有表"""
-            return await self.schema_tool.list_tables(connection_id, schema)
-        
-        @self.app.tool()
-        async def explain_query(
-            connection_id: str,
-            query: str,
-            analyze: bool = False
-        ):
-            """分析查詢執行計畫"""
-            return await self.schema_tool.explain_query(connection_id, query, analyze)
+            try:
+                tables = await self._schema_inspector.list_tables(
+                    connection_id=connection_id,
+                    schema_name=schema_name
+                )
+
+                return {
+                    "success": True,
+                    "schema_name": schema_name,
+                    "tables": tables,
+                    "count": len(tables)
+                }
+
+            except Exception as e:
+                logger.error(
+                    "list_tables_tool_failed",
+                    connection_id=connection_id,
+                    schema_name=schema_name,
+                    error=str(e)
+                )
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
 
         @self.app.tool()
-        async def health_check():
+        async def list_schemas(connection_id: str):
+            """列出所有 schemas"""
+            try:
+                schemas = await self._schema_inspector.list_schemas(connection_id)
+
+                return {
+                    "success": True,
+                    "schemas": schemas,
+                    "count": len(schemas)
+                }
+
+            except Exception as e:
+                logger.error(
+                    "list_schemas_tool_failed",
+                    connection_id=connection_id,
+                    error=str(e)
+                )
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+
+        # Monitoring Tools
+        @self.app.tool()
+        async def health_check(connection_id: Optional[str] = None):
             """健康檢查"""
-            health_status = await self.health_checker.check_overall_health()
-            uptime = self.health_checker.get_uptime()
+            try:
+                if connection_id:
+                    # Check specific connection
+                    health_status = await self._health_checker.check_connection_health(connection_id)
+                else:
+                    # Check system health
+                    health_status = await self._health_checker.check_system_health()
 
-            return {
-                "status": health_status.status,
-                "is_healthy": health_status.is_healthy,
-                "timestamp": health_status.timestamp.isoformat(),
-                "uptime": uptime,
-                "checks": health_status.checks
-            }
+                return {
+                    "is_healthy": health_status.is_healthy,
+                    "response_time_ms": health_status.response_time_ms,
+                    "last_check": health_status.last_check,
+                    "details": health_status.details
+                }
+
+            except Exception as e:
+                logger.error(
+                    "health_check_tool_failed",
+                    connection_id=connection_id,
+                    error=str(e)
+                )
+                return {
+                    "is_healthy": False,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
 
         @self.app.tool()
-        async def get_metrics():
+        async def get_metrics(connection_id: Optional[str] = None):
             """取得伺服器指標"""
-            metrics = await self.metrics_collector.get_server_metrics()
-
-            return {
-                "uptime_seconds": metrics.uptime_seconds,
-                "total_connections": metrics.total_connections,
-                "total_queries": metrics.total_queries,
-                "successful_queries": metrics.successful_queries,
-                "failed_queries": metrics.failed_queries,
-                "success_rate": (metrics.successful_queries / metrics.total_queries * 100) if metrics.total_queries > 0 else 0,
-                "avg_query_time_ms": metrics.avg_query_time_ms,
-                "memory_usage_mb": round(metrics.memory_usage_bytes / (1024 * 1024), 2),
-                "cpu_percent": metrics.cpu_percent,
-                "connections": [
-                    {
-                        "connection_id": conn.connection_id,
-                        "pool_size": conn.pool_size,
-                        "idle_connections": conn.idle_connections,
-                        "active_connections": conn.active_connections,
-                        "total_queries": conn.total_queries,
-                        "successful_queries": conn.successful_queries,
-                        "failed_queries": conn.failed_queries,
-                        "avg_query_time_ms": conn.avg_query_time_ms,
-                        "last_activity": conn.last_activity.isoformat()
+            try:
+                if connection_id:
+                    # Get connection-specific metrics
+                    metrics = await self._metrics_collector.get_connection_metrics(connection_id)
+                    return {
+                        "connection_id": metrics.connection_id,
+                        "total_queries": metrics.total_queries,
+                        "successful_queries": metrics.successful_queries,
+                        "failed_queries": metrics.failed_queries,
+                        "average_execution_time_ms": metrics.average_execution_time_ms,
+                        "last_query_time": metrics.last_query_time,
+                        "query_history": metrics.query_history[-100:]  # Last 100 queries
                     }
-                    for conn in metrics.connections_metrics
-                ]
-            }
+                else:
+                    # Get global metrics
+                    global_metrics = await self._metrics_collector.get_global_metrics()
+                    return global_metrics
 
-    def _add_query_history(
-        self,
-        connection_id: str,
-        query: str,
-        params: Optional[List[Any]],
-        success: bool,
-        duration_ms: int,
-        rows_affected: int,
-        error: Optional[str]
-    ):
-        """添加查詢歷史記錄"""
-        history_entry = QueryHistory(
-            connection_id=connection_id,
-            query=query,
-            params=params,
-            success=success,
-            duration_ms=duration_ms,
-            rows_affected=rows_affected,
-            error=error
-        )
+            except Exception as e:
+                logger.error(
+                    "get_metrics_tool_failed",
+                    connection_id=connection_id,
+                    error=str(e)
+                )
+                return {
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
 
-        self.query_history.append(history_entry)
+        @self.app.tool()
+        async def reset_metrics(connection_id: Optional[str] = None):
+            """重置指標"""
+            try:
+                await self._metrics_collector.reset_metrics(connection_id)
+                return {
+                    "success": True,
+                    "message": f"Metrics reset for {'all connections' if not connection_id else connection_id}"
+                }
 
-        # 限制歷史記錄數量（最多保留 1000 條）
-        if len(self.query_history) > 1000:
-            self.query_history = self.query_history[-1000:]
-
-        # 記錄到指標收集器
-        self.metrics_collector.record_query(connection_id, success, duration_ms)
-
-        logger.info(
-            "query_history_recorded",
-            connection_id=connection_id,
-            query_type=query.split()[0] if query else "UNKNOWN",
-            success=success,
-            duration_ms=duration_ms,
-            total_history_count=len(self.query_history)
-        )
+            except Exception as e:
+                logger.error(
+                    "reset_metrics_tool_failed",
+                    connection_id=connection_id,
+                    error=str(e)
+                )
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
 
     def _register_resources(self):
-        """Register all MCP resources"""
+        """Register all MCP resources using SOLID architecture."""
 
         @self.app.resource("postgresql://connections")
         async def get_connections():
             """返回所有活躍連線"""
-            connections = await self.connection_manager.get_all_connections()
-            return [
-                Resource(
-                    uri=f"postgresql://connection/{conn.connection_id}",
-                    name=f"Connection: {conn.connection_id}",
-                    description=f"PostgreSQL connection to {conn.host}:{conn.port}/{conn.database}",
-                    mimeType="application/json"
-                )
-                for conn in connections
-            ]
+            try:
+                connections_result = await self._connection_handler.list_connections()
+
+                if connections_result.get("success"):
+                    return [
+                        Resource(
+                            uri=f"postgresql://connection/{conn['connection_id']}",
+                            name=f"Connection: {conn['connection_id']}",
+                            description=f"PostgreSQL connection to {conn['host']}:{conn['port']}/{conn['database']}",
+                            mimeType="application/json"
+                        )
+                        for conn in connections_result.get("connections", [])
+                    ]
+                else:
+                    return []
+
+            except Exception as e:
+                logger.error("get_connections_resource_failed", error=str(e))
+                return []
 
         @self.app.resource("postgresql://health")
         async def get_health_resource():
             """健康狀態資源"""
-            health_status = await self.health_checker.check_overall_health()
-            return [
-                Resource(
-                    uri="postgresql://health/status",
-                    name="Health Status",
-                    description=f"Server health: {health_status.status}",
-                    mimeType="application/json"
-                )
-            ]
+            try:
+                health_status = await self._health_checker.check_system_health()
+                status_text = "healthy" if health_status.is_healthy else "unhealthy"
 
-def main():
+                return [
+                    Resource(
+                        uri="postgresql://health/status",
+                        name="Health Status",
+                        description=f"Server health: {status_text}",
+                        mimeType="application/json"
+                    )
+                ]
+
+            except Exception as e:
+                logger.error("get_health_resource_failed", error=str(e))
+                return [
+                    Resource(
+                        uri="postgresql://health/status",
+                        name="Health Status",
+                        description="Health check failed",
+                        mimeType="application/json"
+                    )
+                ]
+
+        @self.app.resource("postgresql://metrics")
+        async def get_metrics_resource():
+            """指標資源"""
+            try:
+                metrics = await self._metrics_collector.get_global_metrics()
+
+                return [
+                    Resource(
+                        uri="postgresql://metrics/global",
+                        name="Global Metrics",
+                        description=f"Total queries: {metrics.get('total_queries', 0)}, Success rate: {metrics.get('success_rate_percent', 0)}%",
+                        mimeType="application/json"
+                    )
+                ]
+
+            except Exception as e:
+                logger.error("get_metrics_resource_failed", error=str(e))
+                return []
+
+    async def run(self):
+        """Run the MCP server."""
+        try:
+            await self.initialize()
+            self.app.run()
+
+        except Exception as e:
+            logger.error("server_run_failed", error=str(e))
+            await self.cleanup()
+            raise
+
+    async def cleanup(self):
+        """Cleanup server resources."""
+        try:
+            if self._dependency_factory:
+                await cleanup_dependency_factory()
+
+            logger.info("postgresql_mcp_server_cleaned_up")
+
+        except Exception as e:
+            logger.error("server_cleanup_failed", error=str(e))
+
+
+async def main():
     """Main entry point"""
     server = PostgreSQLMCPServer()
-    server.app.run()
+    try:
+        await server.run()
+    except KeyboardInterrupt:
+        logger.info("server_interrupted")
+        await server.cleanup()
+    except Exception as e:
+        logger.error("server_main_failed", error=str(e))
+        await server.cleanup()
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

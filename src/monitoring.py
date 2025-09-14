@@ -1,45 +1,4 @@
-"""
-Monitoring and Health Check Module
-
-SPECIFICATION:
-This module provides comprehensive monitoring, health checking, and performance
-metrics collection for the PostgreSQL MCP Server. It tracks system health,
-database connectivity, query performance, and resource utilization.
-
-CORE MONITORING FEATURES:
-- Health Status Tracking: Real-time server and database health monitoring
-- Performance Metrics: Query execution times, connection pool utilization
-- Resource Monitoring: Memory usage, connection counts, system resources
-- Query Analytics: Query patterns, slow query detection, execution statistics
-- Connection Monitoring: Database connection health and pool management
-- Alert Generation: Automated alerts for system anomalies and failures
-
-HEALTH CHECK COMPONENTS:
-1. Server Health: MCP server responsiveness and resource availability
-2. Database Health: Connection pool status and database accessibility
-3. Query Performance: Average query times and slow query detection
-4. Resource Utilization: Memory, CPU, and connection usage monitoring
-5. Error Tracking: Error rates, failure patterns, and recovery metrics
-
-METRICS COLLECTION:
-- System Metrics: Uptime, memory usage, connection counts
-- Query Metrics: Execution times, query counts, error rates
-- Connection Metrics: Pool utilization, connection health, timeouts
-- Performance Metrics: Throughput, latency, resource efficiency
-- Historical Metrics: Time-series data for trend analysis
-
-MONITORING CAPABILITIES:
-- Real-time Health Checks: Continuous monitoring of system components
-- Performance Baselines: Automatic performance threshold establishment
-- Anomaly Detection: Statistical analysis of metric patterns
-- Alerting System: Configurable alerts for critical conditions
-- Metric Aggregation: Statistical summaries and trend analysis
-
-USAGE PATTERN:
-The monitoring system runs continuously in the background, collecting
-metrics and performing health checks. It provides both immediate status
-information and historical trend data for performance analysis.
-"""
+"""Monitoring and health check functionality."""
 
 import asyncio
 import time

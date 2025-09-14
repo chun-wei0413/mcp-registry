@@ -1,46 +1,4 @@
-"""
-Data Models and Type Definitions
-
-SPECIFICATION:
-This module defines all data models, type definitions, and data structures
-used throughout the PostgreSQL MCP Server. It provides type-safe data
-containers using Pydantic models for validation and serialization.
-
-CORE MODEL CATEGORIES:
-1. Connection Models: Database connection information and status
-2. Query Models: Query execution results and metadata
-3. Schema Models: Database schema information (tables, columns, indexes)
-4. Configuration Models: Server and security configuration settings
-5. Monitoring Models: Health status and performance metrics
-6. Security Models: Authentication and authorization data structures
-
-DATA VALIDATION FEATURES:
-- Type Safety: Strict type checking for all model fields
-- Field Validation: Custom validators for complex field requirements
-- Serialization: JSON serialization/deserialization support
-- Default Values: Intelligent default value management
-- Field Documentation: Comprehensive field descriptions and constraints
-
-MODEL DESIGN PRINCIPLES:
-- Immutability: Models are designed to be immutable where possible
-- Validation: All input data is validated against model schemas
-- Consistency: Consistent naming and structure across all models
-- Extensibility: Models support extension and customization
-- Documentation: All models are fully documented with usage examples
-
-PRIMARY MODELS:
-- ConnectionInfo: Database connection configuration and status
-- QueryResult: Query execution results and metadata
-- TableSchema: Database table structure information
-- ServerConfig: Server configuration parameters
-- SecurityConfig: Security policy settings
-- HealthStatus: System health and monitoring data
-
-USAGE PATTERN:
-These models are used throughout the application for data validation,
-API responses, configuration management, and internal data structures.
-All models provide automatic validation and type checking.
-"""
+"""Data models and type definitions for PostgreSQL MCP Server."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
