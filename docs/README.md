@@ -4,50 +4,63 @@
 
 ## 📚 文件導覽
 
-### 🚀 [MCP Server 完整使用手冊](MCP_SERVER_HANDBOOK.md)
-**完整的一站式指南**，包含：
-- 快速開始與部署
-- 詳細的安裝配置步驟
-- 所有 MCP 工具使用說明
-- 實際應用場景範例
-- 安全配置與最佳實務
-- 部署與維運指南
-- 故障排除與性能調優
-- 擴展與客製化方法
+### 🚀 快速開始
+- ⚡ [**快速開始指南**](../QUICK_START.md) - **5分鐘內開始使用！**
+- 🐳 [**Docker Hub 使用指南**](DOCKER_HUB_GUIDE.md) - **官方映像檔部署指南**
 
-### 📋 [使用者指南](guides/USER_GUIDE.md)
-**技術使用指南**，涵蓋：
-- 系統架構概覽
-- MCP 工具詳細說明
-- API 參考文件
-- 安全配置選項
-- 環境變數說明
+### 📖 完整指南
+- 📚 [**MCP Server 完整使用手冊**](MCP_SERVER_HANDBOOK.md) - **一站式完整指南**
+  - 快速開始與部署
+  - 詳細的安裝配置步驟
+  - 所有 MCP 工具使用說明
+  - 實際應用場景範例
+  - 安全配置與最佳實務
+  - 部署與維運指南
+  - 故障排除與性能調優
+  - 擴展與客製化方法
 
-### 📁 [專案結構說明](PROJECT_STRUCTURE.md)
-**專案組織架構**，說明：
-- 完整的目錄結構圖
-- 各檔案的用途說明
-- 模組分層設計理念
-- 新手與開發者指引
+### 💡 實用範例與應用
+- 🔌 [**MCP 客戶端整合範例**](examples/MCP_CLIENT_EXAMPLES.md) - **Python、Node.js、Claude Desktop 整合**
+- 🎯 [**常見使用場景**](USE_CASES.md) - **資料遷移、分析、監控等實際應用**
+
+### 📋 技術參考
+- 📋 [**使用者指南**](guides/USER_GUIDE.md) - **技術使用指南**
+  - 系統架構概覽
+  - MCP 工具詳細說明
+  - API 參考文件
+  - 安全配置選項
+  - 環境變數說明
+
+### 📁 專案資訊
+- 📁 [**專案結構說明**](PROJECT_STRUCTURE.md) - **專案組織架構**
+  - 完整的目錄結構圖
+  - 各檔案的用途說明
+  - 模組分層設計理念
+  - 新手與開發者指引
 
 ## 🎯 快速導覽
 
-### 我是新手，想要快速開始
-👉 [MCP Server 完整使用手冊 - 快速開始](MCP_SERVER_HANDBOOK.md#快速開始)
+### 🆕 我是新手，想要快速開始
+👉 [⚡ 快速開始指南](../QUICK_START.md) - 5分鐘內開始使用！
+👉 [🐳 Docker Hub 指南](DOCKER_HUB_GUIDE.md) - 直接使用官方映像檔
 
-### 我需要了解系統架構
+### 🔧 我需要了解系統架構
 👉 [使用者指南 - 系統架構](guides/USER_GUIDE.md#系統架構)
 
-### 我要設定生產環境
+### 💼 我要看實際應用範例
+👉 [🔌 MCP 客戶端整合範例](examples/MCP_CLIENT_EXAMPLES.md) - Python、Node.js 範例
+👉 [🎯 常見使用場景](USE_CASES.md) - 資料遷移、分析、監控
+
+### 🏭 我要設定生產環境
 👉 [MCP Server 完整使用手冊 - 部署與維運](MCP_SERVER_HANDBOOK.md#部署與維運)
 
-### 我遇到了問題
+### 🚨 我遇到了問題
 👉 [MCP Server 完整使用手冊 - 故障排除](MCP_SERVER_HANDBOOK.md#故障排除)
 
-### 我想要自定義功能
+### 🛠️ 我想要自定義功能
 👉 [MCP Server 完整使用手冊 - 擴展與客製化](MCP_SERVER_HANDBOOK.md#擴展與客製化)
 
-### 我需要 API 參考
+### 📚 我需要 API 參考
 👉 [使用者指南 - API 參考](guides/USER_GUIDE.md#api-參考)
 
 ## 🔧 工具速查

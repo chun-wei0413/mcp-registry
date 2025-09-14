@@ -1,9 +1,39 @@
 #!/usr/bin/env python3
 """
-PostgreSQL MCP Server
+PostgreSQL MCP Server - Main Entry Point
 
-A universal MCP server providing PostgreSQL database operations as tools.
-This server acts as a pure tool layer without business logic.
+SPECIFICATION:
+This is the main MCP (Model Context Protocol) server entry point that provides
+a universal PostgreSQL interface for LLM applications. The server implements
+a pure tool layer architecture without any business logic, allowing LLM agents
+to perform intelligent database operations through standardized MCP tools.
+
+CORE ARCHITECTURE:
+- Pure Tool Layer: No business logic, all intelligence provided by LLM
+- Async Architecture: Full asyncio support for high-performance operations
+- Security-First: Built-in SQL injection protection, operation validation
+- Connection Pool: Efficient database connection management
+- Comprehensive Logging: Structured logging with query tracking
+- Resource Management: MCP resources for connections and query history
+
+PRIMARY COMPONENTS:
+1. MCP Tool Registration: Database operation tools (query, schema, connection)
+2. Resource Providers: Dynamic resources for connections and query history
+3. Security Layer: Query validation, operation filtering, access control
+4. Connection Management: Multi-database connection pool handling
+5. Monitoring Integration: Health checks and performance metrics
+6. Configuration Management: Environment-based configuration system
+
+TOOL CATEGORIES:
+- Connection Tools: add_connection, test_connection
+- Query Tools: execute_query, execute_transaction, batch_execute
+- Schema Tools: get_table_schema, list_tables, explain_query
+- Monitoring Tools: health_check, get_metrics
+
+USAGE PATTERN:
+The server is designed to be used by LLM clients through MCP protocol.
+LLMs provide the intelligence and decision-making, while this server
+provides the database access capabilities as standardized tools.
 """
 
 import asyncio
@@ -250,8 +280,8 @@ class PostgreSQLMCPServer:
 
     def _register_resources(self):
         """Register all MCP resources"""
-        
-        @self.app.resource("connections")
+
+        @self.app.resource("postgresql://connections")
         async def get_connections():
             """返回所有活躍連線"""
             connections = await self.connection_manager.get_all_connections()
@@ -264,25 +294,8 @@ class PostgreSQLMCPServer:
                 )
                 for conn in connections
             ]
-        
-        @self.app.resource("query_history")
-        async def get_query_history(connection_id: Optional[str] = None, limit: int = 100):
-            """返回查詢歷史"""
-            filtered_history = self.query_history
-            if connection_id:
-                filtered_history = [h for h in filtered_history if h.connection_id == connection_id]
-            
-            return [
-                Resource(
-                    uri=f"postgresql://query_history/{i}",
-                    name=f"Query {i}: {history.query[:50]}...",
-                    description=f"Executed at {history.executed_at}",
-                    mimeType="application/json"
-                )
-                for i, history in enumerate(filtered_history[:limit])
-            ]
 
-        @self.app.resource("health")
+        @self.app.resource("postgresql://health")
         async def get_health_resource():
             """健康狀態資源"""
             health_status = await self.health_checker.check_overall_health()
@@ -291,19 +304,6 @@ class PostgreSQLMCPServer:
                     uri="postgresql://health/status",
                     name="Health Status",
                     description=f"Server health: {health_status.status}",
-                    mimeType="application/json"
-                )
-            ]
-
-        @self.app.resource("metrics")
-        async def get_metrics_resource():
-            """監控指標資源"""
-            metrics = await self.metrics_collector.get_server_metrics()
-            return [
-                Resource(
-                    uri="postgresql://metrics/server",
-                    name="Server Metrics",
-                    description=f"Server uptime: {metrics.uptime_seconds}s, queries: {metrics.total_queries}",
                     mimeType="application/json"
                 )
             ]

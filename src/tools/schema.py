@@ -1,5 +1,58 @@
 """
-Schema inspection tools for PostgreSQL MCP Server
+Database Schema Inspection Tools
+
+SPECIFICATION:
+This module implements comprehensive database schema inspection tools for the
+PostgreSQL MCP Server. It provides detailed database structure analysis,
+metadata extraction, and schema documentation capabilities through MCP tools.
+
+CORE SCHEMA TOOLS:
+1. get_table_schema: Detailed table structure analysis and documentation
+2. list_tables: Database table enumeration with metadata
+3. explain_query: Query execution plan analysis and optimization insights
+4. get_column_info: Detailed column information and constraints
+5. get_index_info: Index structure and performance analysis
+
+SCHEMA INSPECTION FEATURES:
+- Table Structure Analysis: Complete table definition with all attributes
+- Column Metadata: Data types, constraints, defaults, and relationships
+- Index Information: Index definitions, usage patterns, and optimization
+- Constraint Analysis: Primary keys, foreign keys, check constraints
+- Relationship Mapping: Table relationships and dependency analysis
+
+METADATA EXTRACTION:
+- Data Type Information: Comprehensive PostgreSQL data type analysis
+- Constraint Details: All constraint types and their specifications
+- Index Performance: Index usage statistics and optimization recommendations
+- Table Statistics: Row counts, size information, and usage patterns
+- Schema Documentation: Automatically generated schema documentation
+
+QUERY ANALYSIS FEATURES:
+- Execution Plan Analysis: EXPLAIN and EXPLAIN ANALYZE query analysis
+- Performance Metrics: Query cost analysis and optimization suggestions
+- Index Usage: Index utilization analysis for query optimization
+- Query Optimization: Performance bottleneck identification and solutions
+- Resource Usage: Memory and I/O usage analysis for queries
+
+SCHEMA DISCOVERY:
+- Automatic Schema Detection: Discovers all database objects and relationships
+- Metadata Catalogs: Comprehensive information_schema and pg_catalog queries
+- Object Dependencies: Tracks dependencies between database objects
+- Permission Analysis: Object-level permission and access control information
+- Schema Validation: Validates schema integrity and consistency
+
+PERFORMANCE INTEGRATION:
+- Schema Performance Impact: Analyzes schema design performance implications
+- Index Recommendations: Suggests optimal indexing strategies
+- Query Optimization: Schema-aware query optimization suggestions
+- Statistics Collection: Gathers schema-related performance statistics
+- Monitoring Integration: Integrates with monitoring for schema tracking
+
+USAGE PATTERN:
+The SchemaTool provides comprehensive database schema inspection
+capabilities, enabling LLM agents to understand database structure,
+optimize queries, and make intelligent decisions about data operations
+based on complete schema knowledge.
 """
 
 from typing import Any, Dict, List, Optional

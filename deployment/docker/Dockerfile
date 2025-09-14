@@ -16,15 +16,13 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY pyproject.toml ./
+# Copy dependencies and source files
+COPY pyproject.toml README.md LICENSE ./
+COPY src/ ./src/
+COPY .env.example .env
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e .
-
-# Copy source code
-COPY src/ ./src/
-COPY .env.example .env
 
 # Create non-root user for security
 RUN groupadd -r mcpuser && useradd -r -g mcpuser mcpuser

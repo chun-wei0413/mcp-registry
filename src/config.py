@@ -1,5 +1,39 @@
 """
-Configuration management for PostgreSQL MCP Server
+Configuration Management Module
+
+SPECIFICATION:
+This module provides centralized configuration management for the PostgreSQL MCP Server.
+It handles environment variable loading, configuration validation, and provides
+type-safe configuration objects throughout the application.
+
+CORE FUNCTIONALITY:
+- Environment Variable Loading: Automatically loads from .env files and system environment
+- Configuration Validation: Type checking and validation of all configuration parameters
+- Default Value Management: Provides sensible defaults for all optional settings
+- Security Configuration: Manages security-related settings (encryption, access control)
+- Server Configuration: Handles server runtime settings (ports, pools, timeouts)
+
+CONFIGURATION CATEGORIES:
+1. Server Configuration (ServerConfig):
+   - MCP server settings (port, log level)
+   - Database connection settings (pool sizes, timeouts)
+   - Runtime parameters (query limits, connection limits)
+
+2. Security Configuration (SecurityConfig):
+   - Access control settings (readonly mode, operation filtering)
+   - Security parameters (encryption keys, blocked keywords)
+   - Query validation settings (length limits, content filtering)
+
+USAGE PATTERN:
+The ConfigManager provides a singleton-like interface for accessing configuration
+throughout the application. It automatically loads configuration on initialization
+and provides validated, type-safe configuration objects.
+
+CONFIGURATION SOURCES (Priority Order):
+1. System environment variables (highest priority)
+2. .env file in current directory
+3. .env file in parent directories (searched upward)
+4. Default values (lowest priority)
 """
 
 import os

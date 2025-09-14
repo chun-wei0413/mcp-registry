@@ -1,5 +1,50 @@
 """
-Connection management tools for PostgreSQL MCP Server
+Connection Management Tools
+
+SPECIFICATION:
+This module implements the connection management tools for the PostgreSQL MCP Server.
+It provides MCP tools for establishing, testing, and managing database connections
+with security, encryption, and multi-database support capabilities.
+
+CORE CONNECTION TOOLS:
+1. add_connection: Establishes new database connections with validation
+2. test_connection: Validates existing connection health and accessibility
+3. remove_connection: Cleanly removes and closes database connections
+4. list_connections: Provides overview of all managed connections
+
+CONNECTION SECURITY FEATURES:
+- Password Encryption: All passwords encrypted using Fernet symmetric encryption
+- Connection Validation: Comprehensive parameter validation and sanitization
+- Access Control: Configurable connection permissions and restrictions
+- Audit Logging: Complete connection activity logging and tracking
+- SSL/TLS Support: Secure database connections with SSL/TLS encryption
+
+MULTI-DATABASE SUPPORT:
+- Connection Pooling: Separate pools for each database connection
+- Connection Isolation: Isolated connection contexts for security
+- Parallel Connections: Concurrent access to multiple databases
+- Connection Sharing: Efficient connection reuse across operations
+- Dynamic Management: Runtime connection addition and removal
+
+CONNECTION LIFECYCLE MANAGEMENT:
+- Automatic Pool Creation: Dynamic connection pool instantiation
+- Health Monitoring: Continuous connection health verification
+- Resource Cleanup: Automatic cleanup of inactive connections
+- Connection Recovery: Transparent recovery from connection failures
+- Graceful Shutdown: Clean connection termination on server shutdown
+
+PERFORMANCE OPTIMIZATIONS:
+- Connection Pool Sizing: Optimal pool size configuration per database
+- Connection Warming: Pre-established connections for faster access
+- Connection Affinity: Optimal connection allocation strategies
+- Resource Monitoring: Connection usage and performance tracking
+- Lazy Initialization: On-demand connection establishment
+
+USAGE PATTERN:
+The ConnectionManager maintains a registry of database connections,
+each with its own connection pool. MCP tools interact with this
+manager to establish, validate, and utilize database connections
+across different databases and use cases.
 """
 
 import asyncio

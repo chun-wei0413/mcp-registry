@@ -13,9 +13,21 @@
 
 ## 📖 文件
 
+### 🚀 快速開始
+- ⚡ [**快速開始指南**](QUICK_START.md) - **5分鐘內開始使用！**
+- 🐳 [**Docker Hub 使用指南**](docs/DOCKER_HUB_GUIDE.md) - **官方映像檔部署指南**
+
+### 📚 完整文件
 - 📚 [文件中心](docs/README.md) - 完整的文件導覽和快速導引
 - 🚀 [MCP Server 完整使用手冊](docs/MCP_SERVER_HANDBOOK.md) - 從入門到進階的一站式指南
 - 📋 [使用者指南](docs/guides/USER_GUIDE.md) - 技術細節和 API 參考
+
+### 💡 實用範例
+- 🔌 [MCP 客戶端整合範例](docs/examples/MCP_CLIENT_EXAMPLES.md) - Python、Node.js、Claude Desktop 整合
+- 🎯 [常見使用場景](docs/USE_CASES.md) - 資料遷移、分析、監控等實際應用
+- ❓ [常見問題 FAQ](QA.md) - 用戶常見問題解答
+
+### 🛡️ 安全與部署
 - 🛡️ [安全配置](docs/MCP_SERVER_HANDBOOK.md#安全與最佳實務) - 安全最佳實務
 - 🚀 [部署指南](docs/MCP_SERVER_HANDBOOK.md#部署與維運) - 生產部署說明
 
@@ -27,7 +39,50 @@
 
 ## 🔧 快速開始
 
-### 使用 Docker (推薦)
+### 使用 Docker Hub 官方映像檔 (推薦)
+
+```bash
+# 直接從 Docker Hub 拉取並運行
+docker run -d \
+  --name postgresql-mcp-server \
+  -p 3000:3000 \
+  -e MCP_SERVER_PORT=3000 \
+  -e MCP_LOG_LEVEL=INFO \
+  -e DEFAULT_POOL_SIZE=10 \
+  -e QUERY_TIMEOUT=30 \
+  -e READONLY_MODE=false \
+  -e ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN \
+  -e BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER \
+  -e MAX_QUERY_LENGTH=10000 \
+  russellli/postgresql-mcp-server:latest
+
+# 查看運行狀態
+docker ps
+docker logs postgresql-mcp-server
+```
+
+#### 使用 docker-compose
+
+```yaml
+version: '3.8'
+services:
+  mcp-server:
+    image: russellli/postgresql-mcp-server:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - MCP_SERVER_PORT=3000
+      - MCP_LOG_LEVEL=INFO
+      - DEFAULT_POOL_SIZE=10
+      - QUERY_TIMEOUT=30
+      - READONLY_MODE=false
+      - ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN
+      - BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER
+      - MAX_QUERY_LENGTH=10000
+    restart: unless-stopped
+```
+
+### 從原始碼建置
 
 ```bash
 # 克隆專案
