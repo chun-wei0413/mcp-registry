@@ -34,10 +34,10 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import asyncio; from src.tools.connection import ConnectionManager; from src.models.types import SecurityConfig; cm = ConnectionManager(SecurityConfig()); print('Health check passed')"
+    CMD python -c "import asyncio; from src.presentation import get_dependency_factory; print('Health check passed')"
 
 # Default command
-CMD ["python", "-m", "src.server"]
+CMD ["python", "src/docker_main.py"]
 
 # Metadata
 LABEL maintainer="FrankLi <a910413frank@gmail.com>" \

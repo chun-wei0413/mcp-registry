@@ -435,6 +435,21 @@ class PostgreSQLMCPServer:
             await self.cleanup()
             raise
 
+    def run_sync(self):
+        """Run the MCP server synchronously for Docker."""
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.initialize())
+            self.app.run()
+        except Exception as e:
+            logger.error("server_run_failed", error=str(e))
+            loop.run_until_complete(self.cleanup())
+            raise
+        finally:
+            loop.close()
+
     async def cleanup(self):
         """Cleanup server resources."""
         try:
