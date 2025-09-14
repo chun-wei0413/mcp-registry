@@ -89,8 +89,26 @@ services:
     networks:
       - mcp-network
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   mcp-network:
@@ -109,6 +127,38 @@ docker-compose ps
 # 查看日誌
 docker-compose logs -f mcp-server
 ```
+
+### 存取服務
+
+服務啟動後，你可以存取：
+
+- **MCP Server**: http://localhost:3000
+  - 健康檢查: `curl http://localhost:3000/health`
+  - 效能指標: `curl http://localhost:3000/metrics`
+
+- **pgAdmin 管理界面**: http://localhost:5050
+  - 預設帳號: `admin@example.com`
+  - 預設密碼: `admin`
+
+- **PostgreSQL 資料庫**: `localhost:5432`
+  - 資料庫名稱: `postgres`
+  - 使用者名稱: `postgres`
+  - 密碼: `password`
+
+### pgAdmin 設定資料庫連線
+
+在 pgAdmin 中新增伺服器連線：
+
+1. 右鍵點擊 "Servers" → "Register" → "Server"
+2. 在 "General" 頁籤：
+   - Name: `PostgreSQL MCP Server`
+3. 在 "Connection" 頁籤：
+   - Host name/address: `postgres` (使用容器名稱)
+   - Port: `5432`
+   - Maintenance database: `postgres`
+   - Username: `postgres`
+   - Password: `password`
+4. 點擊 "Save" 完成設定
 
 ## 🔧 環境變數配置
 
@@ -139,6 +189,14 @@ docker-compose logs -f mcp-server
 | `DB_DATABASE` | 資料庫名稱 |
 | `DB_USER` | 使用者名稱 |
 | `DB_PASSWORD` | 密碼 |
+
+### pgAdmin 配置
+
+| 變數名 | 預設值 | 說明 |
+|--------|--------|------|
+| `PGADMIN_DEFAULT_EMAIL` | `admin@example.com` | pgAdmin 登入帳號 |
+| `PGADMIN_DEFAULT_PASSWORD` | `admin` | pgAdmin 登入密碼 |
+| `PGADMIN_CONFIG_SERVER_MODE` | `False` | 單用戶模式設定 |
 
 ## 🛡️ 安全最佳實務
 
@@ -284,7 +342,24 @@ docker run --rm -v postgres_data:/source -v $(pwd):/backup alpine tar czf /backu
    docker exec -it postgresql-mcp-server ping postgres
    ```
 
-3. **效能問題**
+3. **pgAdmin 無法存取**
+   ```bash
+   # 檢查 pgAdmin 容器狀態
+   docker logs pgadmin4
+
+   # 檢查埠號 5050 是否被佔用
+   netstat -an | grep 5050
+
+   # 重新啟動 pgAdmin 服務
+   docker-compose restart pgadmin
+   ```
+
+4. **pgAdmin 無法連接資料庫**
+   - 確認 Host name/address 設定為 `postgres` (容器名稱)
+   - 確認所有容器都在同一個網路 `mcp-network` 中
+   - 檢查 PostgreSQL 容器是否正常運行：`docker-compose ps`
+
+5. **效能問題**
    ```bash
    # 增加連線池大小
    docker run -e DEFAULT_POOL_SIZE=20 [其他參數]
