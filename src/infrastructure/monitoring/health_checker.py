@@ -169,3 +169,7 @@ class PostgreSQLHealthChecker(IHealthChecker):
             )
 
             raise MonitoringError(f"System health check failed: {e}")
+
+    async def check_health(self) -> HealthStatus:
+        """Check overall system health."""
+        return await self.check_system_health()

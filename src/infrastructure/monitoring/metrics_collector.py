@@ -201,6 +201,30 @@ class InMemoryMetricsCollector(IMetricsCollector):
             )
             raise MonitoringError(f"Failed to reset metrics: {e}")
 
+    async def collect_metrics(self) -> MetricsData:
+        """Collect system metrics."""
+        try:
+            # Return system-wide metrics as MetricsData for the first connection
+            # or create a synthetic one if no connections exist
+            if self._connection_metrics:
+                first_connection_id = list(self._connection_metrics.keys())[0]
+                return await self.get_connection_metrics(first_connection_id)
+            else:
+                # Return empty metrics if no connections
+                return MetricsData(
+                    connection_id="system",
+                    total_queries=self._global_metrics["total_queries"],
+                    successful_queries=self._global_metrics["successful_queries"],
+                    failed_queries=self._global_metrics["failed_queries"],
+                    average_execution_time_ms=0,
+                    last_query_time=None,
+                    query_history=[]
+                )
+
+        except Exception as e:
+            logger.error("collect_metrics_failed", error=str(e))
+            raise MonitoringError(f"Failed to collect metrics: {e}")
+
     async def export_metrics(self) -> Dict[str, Any]:
         """Export all metrics for external systems."""
         try:

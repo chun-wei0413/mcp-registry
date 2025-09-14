@@ -29,7 +29,7 @@ class PostgreSQLSchemaInspector(ISchemaInspector):
             if not conn:
                 raise QueryError(f"Connection {connection_id} not found")
 
-            pool = await self._connection_manager._get_pool(connection_id)
+            pool = await self._connection_manager.get_pool(connection_id)
             async with pool.acquire() as connection:
                 # Get table columns
                 columns = await self._get_table_columns(connection, table_name, schema_name)
@@ -82,7 +82,7 @@ class PostgreSQLSchemaInspector(ISchemaInspector):
             if not conn:
                 raise QueryError(f"Connection {connection_id} not found")
 
-            pool = await self._connection_manager._get_pool(connection_id)
+            pool = await self._connection_manager.get_pool(connection_id)
             async with pool.acquire() as connection:
                 query = """
                 SELECT
@@ -134,7 +134,7 @@ class PostgreSQLSchemaInspector(ISchemaInspector):
             if not conn:
                 raise QueryError(f"Connection {connection_id} not found")
 
-            pool = await self._connection_manager._get_pool(connection_id)
+            pool = await self._connection_manager.get_pool(connection_id)
             async with pool.acquire() as connection:
                 query = """
                 SELECT schema_name
@@ -331,3 +331,67 @@ class PostgreSQLSchemaInspector(ISchemaInspector):
                 error=str(e)
             )
             return {"table_size": 0, "row_count": 0, "statistics": []}
+
+    async def explain_query(
+        self,
+        connection_id: str,
+        query: str,
+        analyze: bool = False
+    ) -> Dict[str, Any]:
+        """Explain query execution plan."""
+        try:
+            conn = await self._connection_manager.get_connection(connection_id)
+            if not conn:
+                raise QueryError(f"Connection {connection_id} not found")
+
+            pool = await self._connection_manager.get_pool(connection_id)
+            async with pool.acquire() as connection:
+                # Build EXPLAIN query
+                explain_query = f"EXPLAIN {'ANALYZE ' if analyze else ''}{query}"
+
+                try:
+                    rows = await connection.fetch(explain_query)
+
+                    # Convert rows to list of dictionaries
+                    explain_result = []
+                    for row in rows:
+                        explain_result.append(dict(row))
+
+                    logger.debug(
+                        "query_explained",
+                        connection_id=connection_id,
+                        analyze=analyze,
+                        plan_rows=len(explain_result)
+                    )
+
+                    return {
+                        "success": True,
+                        "query": query,
+                        "analyze": analyze,
+                        "plan": explain_result
+                    }
+
+                except Exception as query_error:
+                    logger.error(
+                        "explain_query_execution_failed",
+                        connection_id=connection_id,
+                        query=query[:100],
+                        error=str(query_error)
+                    )
+
+                    return {
+                        "success": False,
+                        "query": query,
+                        "analyze": analyze,
+                        "error": str(query_error),
+                        "error_type": type(query_error).__name__
+                    }
+
+        except Exception as e:
+            logger.error(
+                "explain_query_failed",
+                connection_id=connection_id,
+                query=query[:100],
+                error=str(e)
+            )
+            raise QueryError(f"Failed to explain query: {e}")
