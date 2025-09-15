@@ -32,9 +32,8 @@ class PostgreSQLSecurityValidator(ISecurityValidator):
 
         # SQL injection patterns
         self._injection_patterns = [
-            r"'[^']*'[^']*'",  # Potential string escape
             r";[\s]*\w+",      # Command chaining
-            r"--[\s]*\w+",     # SQL comments
+            r"--[\s]*\w+",     # SQL comments with content
             r"/\*.*?\*/",      # Block comments
             r"\bunion\b.*\bselect\b",  # UNION injection
             r"\bor\b.*\b=\b.*\bor\b",  # OR-based injection

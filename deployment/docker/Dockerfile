@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 # Copy dependencies and source files
 COPY pyproject.toml README.md LICENSE ./
 COPY src/ ./src/
-COPY .env.example .env
+COPY .env .env
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e .

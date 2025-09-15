@@ -23,20 +23,8 @@ def main():
         # Create server instance
         server = PostgreSQLMCPServer()
 
-        # Initialize and run server
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        # Initialize the server
-        loop.run_until_complete(server.initialize())
-        logger.info("Server initialization completed")
-
-        logger.info("PostgreSQL MCP Server is ready and running on port 3000")
-
-        # Run the server using uvicorn directly
-        import uvicorn
-        # Get the FastMCP streamable HTTP app instance and run with uvicorn
-        uvicorn.run(server.app.streamable_http_app, host="0.0.0.0", port=3000)
+        # Use run_sync_http method that doesn't conflict with asyncio
+        server.run_sync_http()
 
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")

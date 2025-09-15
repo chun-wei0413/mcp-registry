@@ -35,7 +35,7 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
                     result = await conn.fetch(query.sql)
 
                 rows = [dict(row) for row in result]
-                execution_time = (time.time() - start_time) * 1000
+                execution_time = int((time.time() - start_time) * 1000)
 
                 logger.info(
                     "query_executed",
@@ -48,13 +48,13 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
                 return QueryResult(
                     success=True,
                     rows=rows,
-                    affected_rows=len(rows),
+                    row_count=len(rows),
                     execution_time_ms=execution_time,
                     query_id=query.query_id
                 )
 
         except Exception as e:
-            execution_time = (time.time() - start_time) * 1000
+            execution_time = int((time.time() - start_time) * 1000)
 
             logger.error(
                 "query_failed",
@@ -68,7 +68,7 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
                 success=False,
                 execution_time_ms=execution_time,
                 query_id=query.query_id,
-                error_message=str(e)
+                message=str(e)
             )
 
     async def execute_transaction(self, connection_id: str, queries: List[Query]) -> QueryResult:
@@ -90,7 +90,7 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
                             await conn.execute(query.sql)
                         total_affected += 1
 
-                execution_time = (time.time() - start_time) * 1000
+                execution_time = int((time.time() - start_time) * 1000)
 
                 logger.info(
                     "transaction_executed",
@@ -102,12 +102,12 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
 
                 return QueryResult(
                     success=True,
-                    affected_rows=total_affected,
+                    row_count=total_affected,
                     execution_time_ms=execution_time
                 )
 
         except Exception as e:
-            execution_time = (time.time() - start_time) * 1000
+            execution_time = int((time.time() - start_time) * 1000)
 
             logger.error(
                 "transaction_failed",
@@ -120,7 +120,7 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
             return QueryResult(
                 success=False,
                 execution_time_ms=execution_time,
-                error_message=str(e)
+                message=str(e)
             )
 
     async def execute_batch(self, connection_id: str, query: Query, params_list: List[List[Any]]) -> QueryResult:
@@ -135,7 +135,7 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
             async with pool.acquire() as conn:
                 await conn.executemany(query.sql, params_list)
 
-                execution_time = (time.time() - start_time) * 1000
+                execution_time = int((time.time() - start_time) * 1000)
 
                 logger.info(
                     "batch_executed",
@@ -146,13 +146,13 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
 
                 return QueryResult(
                     success=True,
-                    affected_rows=len(params_list),
+                    row_count=len(params_list),
                     execution_time_ms=execution_time,
                     query_id=query.query_id
                 )
 
         except Exception as e:
-            execution_time = (time.time() - start_time) * 1000
+            execution_time = int((time.time() - start_time) * 1000)
 
             logger.error(
                 "batch_failed",
@@ -166,5 +166,5 @@ class PostgreSQLQueryExecutor(IQueryExecutor):
                 success=False,
                 execution_time_ms=execution_time,
                 query_id=query.query_id,
-                error_message=str(e)
+                message=str(e)
             )

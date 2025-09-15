@@ -27,7 +27,8 @@ class PostgreSQLMCPServer:
     """PostgreSQL MCP Server implementation with SOLID architecture."""
 
     def __init__(self, config_file: Optional[str] = None):
-        self.app = FastMCP("PostgreSQL MCP Server")
+        # Use stateless_http=True for better session management with Claude Code
+        self.app = FastMCP("PostgreSQL MCP Server", stateless_http=True)
         self._dependency_factory = None
         self._connection_handler: ConnectionHandler = None
         self._query_handler: QueryHandler = None
@@ -435,6 +436,25 @@ class PostgreSQLMCPServer:
             await self.cleanup()
             raise
 
+    async def run_http(self, host="0.0.0.0", port=3000, path="/mcp"):
+        """Run the MCP server with HTTP transport."""
+        try:
+            await self.initialize()
+            logger.info(
+                "starting_http_server",
+                host=host,
+                port=port,
+                path=path
+            )
+            # Use streamable-http transport for Claude Code compatibility
+            # FastMCP run() method only accepts transport parameter
+            self.app.run(transport="streamable-http")
+
+        except Exception as e:
+            logger.error("server_http_run_failed", error=str(e))
+            await self.cleanup()
+            raise
+
     def run_sync(self):
         """Run the MCP server synchronously for Docker."""
         import asyncio
@@ -445,6 +465,42 @@ class PostgreSQLMCPServer:
             self.app.run()
         except Exception as e:
             logger.error("server_run_failed", error=str(e))
+            loop.run_until_complete(self.cleanup())
+            raise
+        finally:
+            loop.close()
+
+    def run_sync_http(self, host="0.0.0.0", port=3000):
+        """Run the MCP server with HTTP transport synchronously for Docker."""
+        import asyncio
+        import uvicorn
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            logger.info("initializing_server_for_http_transport")
+            loop.run_until_complete(self.initialize())
+
+            # Get the Starlette app directly instead of using self.app.run()
+            starlette_app = self.app.streamable_http_app()
+
+            logger.info(
+                "starting_streamable_http_server",
+                host=host,
+                port=port,
+                endpoint="/mcp"
+            )
+
+            # Use uvicorn to run the Starlette app with custom host/port
+            uvicorn.run(
+                starlette_app,
+                host=host,
+                port=port,
+                log_level="info"
+            )
+
+        except Exception as e:
+            logger.error("server_http_sync_run_failed", error=str(e))
             loop.run_until_complete(self.cleanup())
             raise
         finally:

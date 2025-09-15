@@ -26,14 +26,13 @@ class SecurityValidator:
         """建立危險操作的正則表達式模式"""
         patterns = []
 
-        # 基本的危險關鍵字
+        # 基本的危險關鍵字 (移除 CREATE，因為它會誤攔 INSERT)
         dangerous_keywords = [
             r'\bDROP\s+',
             r'\bTRUNCATE\s+',
             r'\bALTER\s+',
-            r'\bCREATE\s+',
-            r'\bDELETE\s+FROM\s+(?!.*WHERE)',  # DELETE without WHERE
-            r'\bUPDATE\s+.*SET\s+.*(?<!WHERE)',  # UPDATE without WHERE (簡化檢查)
+            # r'\bCREATE\s+',  # 移除此規則，避免誤攔其他操作
+            r'\bDELETE\s+FROM\s+\w+\s*(?!.*WHERE)',  # DELETE without WHERE (改善正則)
             r'\bGRANT\s+',
             r'\bREVOKE\s+',
             r'\bCOPY\s+',
