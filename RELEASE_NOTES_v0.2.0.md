@@ -87,11 +87,11 @@ def run_sync_http(self, host="0.0.0.0", port=3000):
 ### 可用映像
 ```bash
 # 拉取最新版本
-docker pull chun-wei0413/postgresql-mcp-server:0.2.0
-docker pull chun-wei0413/postgresql-mcp-server:latest
+docker pull russellli/postgresql-mcp-server:0.2.0
+docker pull russellli/postgresql-mcp-server:latest
 
 # 直接運行
-docker run -d -p 3000:3000 chun-wei0413/postgresql-mcp-server:0.2.0
+docker run -d -p 3000:3000 russellli/postgresql-mcp-server:0.2.0
 ```
 
 ### 完整部署範例
@@ -116,7 +116,7 @@ curl http://localhost:3000/health
 
 2. **更新映像**:
    ```bash
-   docker pull chun-wei0413/postgresql-mcp-server:0.2.0
+   docker pull russellli/postgresql-mcp-server:0.2.0
    ```
 
 3. **重新啟動**:

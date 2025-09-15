@@ -5,7 +5,7 @@
 
 set -e
 
-DOCKER_USERNAME="${DOCKER_USERNAME:-chun-wei0413}"
+DOCKER_USERNAME="${DOCKER_USERNAME:-russellli}"
 IMAGE_NAME="postgresql-mcp-server"
 VERSION="0.2.0"
 
