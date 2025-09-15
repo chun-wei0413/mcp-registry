@@ -16,8 +16,8 @@ from mcp.types import (
     LoggingLevel
 )
 
-from .presentation import get_dependency_factory, cleanup_dependency_factory
-from .presentation.mcp_handlers import ConnectionHandler, QueryHandler
+from .api import get_dependency_factory, cleanup_dependency_factory
+from .api.handlers import ConnectionHandler, QueryHandler
 from .core.interfaces import IHealthChecker, IMetricsCollector, ISchemaInspector
 
 logger = structlog.get_logger()

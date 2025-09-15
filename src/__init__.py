@@ -44,7 +44,7 @@ from .application import (
     QueryService
 )
 
-from .presentation import (
+from .api import (
     ConnectionHandler,
     QueryHandler,
     DependencyFactory,
@@ -102,7 +102,7 @@ __all__ = [
     "ConnectionService",
     "QueryService",
 
-    # Presentation handlers
+    # API handlers
     "ConnectionHandler",
     "QueryHandler",
     "DependencyFactory",

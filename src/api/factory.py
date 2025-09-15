@@ -25,7 +25,7 @@ from ..infrastructure import (
 
 from ..domain.services import QueryBuilder, ConnectionValidator
 from ..application.services import ConnectionService, QueryService
-from .mcp_handlers import ConnectionHandler, QueryHandler
+from .handlers import ConnectionHandler, QueryHandler
 
 logger = structlog.get_logger()
 

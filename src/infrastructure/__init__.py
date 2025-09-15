@@ -3,7 +3,7 @@
 from .database import PostgreSQLConnectionPool, PostgreSQLQueryExecutor
 from .security import PostgreSQLSecurityValidator
 from .monitoring import PostgreSQLHealthChecker, InMemoryMetricsCollector
-from .config import EnvironmentConfigurationManager
+from .configuration import EnvironmentConfigurationManager
 from .schema import PostgreSQLSchemaInspector
 
 __all__ = [

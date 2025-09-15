@@ -1,4 +1,4 @@
-"""MCP handlers for presentation layer."""
+"""MCP handlers for API layer."""
 
 from .connection_handler import ConnectionHandler
 from .query_handler import QueryHandler
