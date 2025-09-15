@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "postgresql-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "A universal PostgreSQL MCP Server for intelligent data operations"
 authors = [
     {name = "FrankLi", email = "a910413frank@gmail.com"}
