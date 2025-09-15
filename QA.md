@@ -61,6 +61,109 @@ source_data = await execute_query("main_db", "SELECT * FROM table1")
 await batch_execute("main_db", "INSERT INTO table2 VALUES (...)", data)
 ```
 
+### **問題3: CREATE/INSERT 權限問題**
+
+**Q: 原本這個 MCP Server 不能使用 INSERT 和 CREATE TABLE 的指令是因為什麼原因，然後後來怎麼解決的？**
+
+**A:**
+**問題原因：**
+- MCP Server 內建安全驗證機制，預設只允許 SELECT, UPDATE, DELETE 等安全操作
+- CREATE 操作被歸類為「危險操作」，預設被阻擋以保護資料庫安全
+- 環境變數配置中的 `SECURITY_ALLOWED_OPERATIONS` 沒有包含 CREATE
+
+**解決方法：**
+```yaml
+# docker-compose.yml 中更新環境變數
+environment:
+  - SECURITY_ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN,CREATE
+  - SECURITY_BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER
+  - ALLOWED_OPERATIONS=SELECT,INSERT,UPDATE,DELETE,WITH,EXPLAIN,CREATE
+  - BLOCKED_KEYWORDS=DROP,TRUNCATE,ALTER
+```
+
+**注意事項：**
+- 需要重新啟動 Docker 容器讓環境變數生效
+- 可以根據需求調整允許的操作類型
+- 生產環境建議謹慎開放 CREATE 權限
+
+### **問題4: 跨資料庫遷移設定**
+
+**Q: 如果今天做 data migration 的 source 和 destination 的 DB 不一樣了，那我要怎麼設定資料庫的參數使得 Claude 能夠調度 pg_mcp 去對這兩個 DB 做 data migration？**
+
+**A:**
+建立多個連線，每個資料庫使用不同的 connection_id：
+
+```python
+# 1. 建立來源資料庫連線
+await add_connection(
+    connection_id="source_db",
+    host="source-server.com",
+    port=5432,
+    database="production_db",
+    user="source_user",
+    password="source_password"
+)
+
+# 2. 建立目標資料庫連線
+await add_connection(
+    connection_id="target_db",
+    host="target-server.com",
+    port=5432,
+    database="backup_db",
+    user="target_user",
+    password="target_password"
+)
+
+# 3. 跨資料庫遷移操作
+# 從來源讀取資料
+source_data = await execute_query("source_db", "SELECT * FROM users")
+
+# 檢查目標表結構
+target_schema = await get_table_schema("target_db", "users")
+
+# 寫入目標資料庫
+await execute_query("target_db", "INSERT INTO users (...) VALUES (...)")
+```
+
+**優勢：**
+- 同時管理多個資料庫連線
+- 支援不同主機、不同認證的資料庫
+- 可以在遷移過程中比較兩邊的資料結構
+
+### **問題5: pg_mcp vs docker exec 的本質差異**
+
+**Q: 我讓 LLM 去使用 pg_mcp 去做 Data migration 和叫 LLM 對 DB 做 docker exec 直接對資料庫下指令有沒有什麼本質上的差別使我一定要透過 pg_mcp？**
+
+**A:**
+**本質差異對比：**
+
+| 特性 | pg_mcp 方式 | docker exec 方式 |
+|------|-------------|------------------|
+| **安全性** | ✅ 參數化查詢防 SQL Injection<br>✅ 權限控制和操作限制 | ❌ 直接執行 SQL，易受攻擊<br>❌ 無內建安全檢查 |
+| **錯誤處理** | ✅ 結構化錯誤回應<br>✅ 自動重試和回滾 | ❌ 命令行錯誤，難以解析<br>❌ 手動處理異常 |
+| **資料型別** | ✅ 自動型別轉換和驗證<br>✅ JSON 格式標準化 | ❌ 字串解析，易出錯<br>❌ 需手動處理格式 |
+| **監控審計** | ✅ 完整查詢日誌和指標<br>✅ 健康檢查和監控 | ❌ 有限的日誌記錄<br>❌ 難以追蹤操作歷史 |
+| **連線管理** | ✅ 連線池優化性能<br>✅ 自動連線健康檢查 | ❌ 每次新建連線<br>❌ 無連線池機制 |
+| **跨平台** | ✅ 標準 MCP 協定<br>✅ 與任何 MCP 客戶端整合 | ❌ 依賴 Docker 環境<br>❌ 平台綁定 |
+
+**實際範例比較：**
+
+```python
+# pg_mcp 方式 (推薦)
+result = await execute_query(
+    "main_db",
+    "SELECT * FROM users WHERE id = $1",
+    [user_id]  # 自動防 SQL Injection
+)
+
+# docker exec 方式 (不推薦)
+command = f"docker exec postgres psql -U user -d db -c \"SELECT * FROM users WHERE id = '{user_id}'\""
+# 風險：如果 user_id 包含惡意 SQL，可能導致 SQL Injection
+```
+
+**結論：**
+pg_mcp 提供了**生產級的安全性、可靠性和可維護性**，而 docker exec 更像是**開發階段的臨時工具**。對於正式的資料遷移任務，強烈建議使用 pg_mcp。
+
 ---
 
 ## 🤔 常見問題擴展
