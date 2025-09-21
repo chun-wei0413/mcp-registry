@@ -176,3 +176,22 @@ tmp/
 
 # Claude Code specific files
 CLAUDE.md
+
+# Old kanban data - contains sensitive information
+old_kanban_data/
+
+# Docker volumes and data
+postgresql-mcp-server/docker/data/
+mysql-mcp-server/docker/data/
+mysql-mcp-server/docker/backup_data/*.sql
+mysql-mcp-server/docker/backup_data/*.sql.gz
+
+# MCP Server specific
+postgresql-mcp-server/logs/
+mysql-mcp-server/logs/
+
+# Legacy files (to be removed)
+src/
+tests/
+deployment/
+run_tests.py

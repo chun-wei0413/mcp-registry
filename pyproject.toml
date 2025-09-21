@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "postgresql-mcp-server"
+name = "pg-mcp-servers"
 version = "0.3.0"
-description = "A universal PostgreSQL MCP Server for intelligent data operations"
+description = "PostgreSQL & MySQL MCP Servers for intelligent data migration and operations"
 authors = [
     {name = "FrankLi", email = "a910413frank@gmail.com"}
 ]
@@ -23,6 +23,7 @@ classifiers = [
 dependencies = [
     "mcp>=1.0.0",
     "asyncpg>=0.29.0",
+    "aiomysql>=0.2.0",
     "pydantic>=2.0.0",
     "structlog>=23.0.0",
     "python-dotenv>=1.0.0",
@@ -47,7 +48,8 @@ test = [
 ]
 
 [project.scripts]
-postgresql-mcp-server = "src.server:main"
+postgresql-mcp-server = "src.postgresql_mcp.server:main"
+mysql-mcp-server = "src.mysql_mcp.mysql_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

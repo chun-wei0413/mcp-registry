@@ -1,6 +1,44 @@
-# PostgreSQL MCP Server
+# PostgreSQL & MySQL MCP Servers
 
-一個通用的 PostgreSQL MCP Server，為 LLM 提供智能資料庫操作能力。此 Server 作為純工具層，不包含任何業務邏輯，所有智能決策由 LLM 根據 Context 自主完成。
+智能資料遷移和操作的完整 MCP 解決方案，包含 PostgreSQL 和 MySQL 兩個 MCP Server。
+
+## 🎯 專案概述
+
+此專案提供兩個企業級的 MCP Server，支援：
+
+- **PostgreSQL MCP Server**: 針對現代 PostgreSQL 資料庫的完整操作
+- **MySQL MCP Server**: 專為 old_kanban_data 遷移設計的 MySQL 操作
+- **智能資料遷移**: LLM 驅動的跨資料庫遷移方案
+- **State Sourcing 優先**: 聚焦當前業務狀態的遷移策略
+
+## 🏗️ 專案結構
+
+```
+pg-mcp/
+├── postgresql-mcp-server/          # PostgreSQL MCP Server
+│   ├── src/                        # 源碼
+│   ├── tests/                      # 測試
+│   ├── docker/                     # Docker 配置
+│   ├── pyproject.toml             # Python 專案配置
+│   └── README.md                   # PostgreSQL 專案說明
+├── mysql-mcp-server/               # MySQL MCP Server
+│   ├── src/                        # 源碼
+│   ├── tests/                      # 測試
+│   ├── docker/                     # Docker 配置
+│   ├── pyproject.toml             # Python 專案配置
+│   └── README.md                   # MySQL 專案說明
+├── docs/                           # 共用文檔
+│   ├── data_migration/            # 資料遷移文檔
+│   │   ├── kanban_migration.md    # 遷移專案規劃
+│   │   ├── migration_coordinator.py    # 遷移協調器
+│   │   └── migration_instructions.md   # 執行指南
+│   └── common/                     # 通用文檔
+├── scripts/                        # 共用腳本
+├── logs/                          # 日誌目錄
+├── docker-compose.yml             # 整合部署配置
+├── .env.example                   # 環境變數範例
+└── README.md                      # 主專案說明 (本檔案)
+```
 
 ## 🆕 版本 0.3.0 更新內容
 
