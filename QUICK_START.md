@@ -44,9 +44,9 @@ docker-compose ps
 | 服務 | 端點 | 說明 |
 |------|------|------|
 | PostgreSQL MCP Server | `http://localhost:3000` | 目標資料庫操作 |
-| MySQL MCP Server | `http://localhost:3001` | 舊資料庫存取 |
+| MySQL MCP Server | `http://localhost:3001` | MySQL 資料庫操作 |
 | PostgreSQL 資料庫 | `localhost:5432` | 目標資料庫 |
-| MySQL 資料庫 | `localhost:3306` | 舊資料庫 |
+| MySQL 資料庫 | `localhost:3306` | MySQL 資料庫 |
 
 ## 🏗️ 統一架構說明
 
@@ -94,23 +94,23 @@ postgres-target-db     "docker-entrypoint.s…"   Up (healthy)   0.0.0.0:5432->5
 mysql-source-db        "docker-entrypoint.s…"   Up (healthy)   0.0.0.0:3306->3306/tcp
 ```
 
-## 🎪 開始 Kanban 資料遷移
+## 🎪 開始資料庫操作示範
 
-### 1. 準備舊資料
+### 1. 準備範例資料
 
 ```bash
 # 將您的 MySQL 備份檔案放到正確位置
-cp your_old_kanban_backup.sql deployment/docker/mysql/backup_data/
+cp your_backup_file.sql deployment/docker/mysql/backup_data/
 
 # 載入到 MySQL 容器
-docker exec -i mysql-source-db mysql -u migration_user -pmigration_pass old_kanban_data < deployment/docker/mysql/backup_data/your_old_kanban_backup.sql
+docker exec -i mysql-source-db mysql -u migration_user -pmigration_pass your_database < deployment/docker/mysql/backup_data/your_backup_file.sql
 ```
 
 ### 2. 驗證資料載入
 
 ```bash
 # 檢查資料是否載入成功
-docker exec mysql-source-db mysql -u migration_user -pmigration_pass -e "USE old_kanban_data; SHOW TABLES;"
+docker exec mysql-source-db mysql -u migration_user -pmigration_pass -e "USE your_database; SHOW TABLES;"
 ```
 
 ### 3. 執行智能遷移
@@ -133,7 +133,7 @@ await mysql_mcp.add_connection(
     connection_id="source_db",
     host="localhost",
     port=3306,
-    database="old_kanban_data",
+    database="your_database",
     user="migration_user",
     password="migration_pass"
 )
@@ -218,7 +218,7 @@ docker-compose logs -f mysql-mcp-server
 docker exec -it postgres-target-db psql -U postgres -d target_database
 
 # MySQL 容器
-docker exec -it mysql-source-db mysql -u migration_user -pmigration_pass old_kanban_data
+docker exec -it mysql-source-db mysql -u migration_user -pmigration_pass your_database
 ```
 
 ## ❗ 常見問題
@@ -253,7 +253,7 @@ docker exec -it mysql-source-db mysql -u migration_user -pmigration_pass old_kan
 1. **檢查資料是否正確載入**：
    ```bash
    # 檢查 MySQL 資料
-   docker exec mysql-source-db mysql -u migration_user -pmigration_pass -e "USE old_kanban_data; SELECT COUNT(*) FROM users;"
+   docker exec mysql-source-db mysql -u migration_user -pmigration_pass -e "USE your_database; SELECT COUNT(*) FROM users;"
    ```
 
 2. **檢查 MCP Server 健康狀態**：
@@ -271,7 +271,7 @@ docker exec -it mysql-source-db mysql -u migration_user -pmigration_pass old_kan
 
 ## 📖 下一步
 
-- 參考 [Kanban 遷移指南](docs/data_migration/migration_instructions.md)
+- 參考 [完整文檔](docs/README.md)
 - 查看 [常見問題解答](QA.md)
 - 閱讀完整的 [README](README.md)
 

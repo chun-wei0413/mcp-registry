@@ -1,43 +1,44 @@
 # PostgreSQL & MySQL MCP Servers
 
-智能資料遷移和操作的完整 MCP 解決方案，包含 PostgreSQL 和 MySQL 兩個 MCP Server。
+智能資料庫操作的完整 MCP 解決方案，包含 PostgreSQL 和 MySQL 兩個企業級 MCP Server。
 
 ## 🎯 專案概述
 
 此專案提供兩個企業級的 MCP Server，支援：
 
-- **PostgreSQL MCP Server**: 針對現代 PostgreSQL 資料庫的完整操作
-- **MySQL MCP Server**: 專為 old_kanban_data 遷移設計的 MySQL 操作
-- **智能資料遷移**: LLM 驅動的跨資料庫遷移方案
-- **State Sourcing 優先**: 聚焦當前業務狀態的遷移策略
+- **PostgreSQL MCP Server**: 針對現代 PostgreSQL 資料庫的完整操作和管理
+- **MySQL MCP Server**: 專為 MySQL 資料庫設計的企業級操作工具
+- **智能資料遷移**: LLM 驅動的跨資料庫遷移和同步方案
 
 ## 🏗️ 專案結構
 
 ```
 pg-mcp/
-├── postgresql-mcp-server/          # PostgreSQL MCP Server
-│   ├── src/                        # 源碼
-│   ├── tests/                      # 測試
-│   ├── docker/                     # Docker 配置
-│   ├── pyproject.toml             # Python 專案配置
-│   └── README.md                   # PostgreSQL 專案說明
-├── mysql-mcp-server/               # MySQL MCP Server
-│   ├── src/                        # 源碼
-│   ├── tests/                      # 測試
-│   ├── docker/                     # Docker 配置
-│   ├── pyproject.toml             # Python 專案配置
-│   └── README.md                   # MySQL 專案說明
-├── docs/                           # 共用文檔
-│   ├── data_migration/            # 資料遷移文檔
-│   │   ├── kanban_migration.md    # 遷移專案規劃
-│   │   ├── migration_coordinator.py    # 遷移協調器
-│   │   └── migration_instructions.md   # 執行指南
-│   └── common/                     # 通用文檔
-├── scripts/                        # 共用腳本
-├── logs/                          # 日誌目錄
-├── docker-compose.yml             # 整合部署配置
-├── .env.example                   # 環境變數範例
-└── README.md                      # 主專案說明 (本檔案)
+├── src/
+│   ├── postgresql_mcp/            # PostgreSQL MCP Server
+│   │   ├── api/                   # API 層
+│   │   ├── application/           # 應用服務層
+│   │   ├── core/                  # 核心介面和例外
+│   │   ├── domain/                # 領域模型
+│   │   ├── infrastructure/        # 基礎設施層
+│   │   └── server.py              # 主服務器
+│   └── mysql_mcp/                 # MySQL MCP Server
+│       ├── core/                  # 核心介面和例外
+│       ├── infrastructure/        # 基礎設施層
+│       └── mysql_server.py        # 主服務器
+├── tests/                         # 測試套件
+│   └── postgresql_mcp/           # PostgreSQL 測試
+├── docs/                          # 完整文檔
+│   ├── guides/                    # 使用指南
+│   ├── examples/                  # 使用範例
+│   └── README.md                  # 文檔導覽
+├── deployment/                    # 部署配置
+├── scripts/                       # 管理腳本
+├── logs/                         # 日誌目錄
+├── docker-compose.yml            # 整合部署配置
+├── pyproject.toml                # Python 專案配置
+├── .env.example                  # 環境變數範例
+└── README.md                     # 主專案說明 (本檔案)
 ```
 
 ## 🆕 版本 0.3.0 更新內容
