@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  mysql-mcp:
+    image: russellli/mysql-mcp-server:latest
+    container_name: mysql-mcp-test
+    ports:
+      - "3002:3002"
+    environment:
+      - MCP_SERVER_PORT=3002
+      - MCP_LOG_LEVEL=INFO
+      - DEFAULT_POOL_SIZE=10
+      - QUERY_TIMEOUT=30
+    depends_on:
+      - mysql-db
+    networks:
+      - mysql-test-network
+    restart: unless-stopped
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-test-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=testdb
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpass
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - mysql-test-network
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin-test
+    environment:
+      - PMA_HOST=mysql-db
+      - PMA_PORT=3306
+      - PMA_USER=testuser
+      - PMA_PASSWORD=testpass
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql-db
+    networks:
+      - mysql-test-network
+    restart: unless-stopped
+
+volumes:
+  mysql_test_data:
+
+networks:
+  mysql-test-network:
+    driver: bridge

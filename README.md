@@ -41,6 +41,30 @@ pg-mcp/
 └── README.md                     # 主專案說明 (本檔案)
 ```
 
+## 🆕 版本 0.4.0 更新內容
+
+### 🐳 Docker Hub 部署
+- **Docker 映像發布**:
+  - `russellli/postgresql-mcp-server:latest` (~403MB)
+  - `russellli/mysql-mcp-server:latest` (~401MB)
+- **一鍵部署**: 支援 Docker Hub 拉取即用
+- **測試環境**: 完整的 docker-compose 測試環境配置
+
+### 🔧 Claude Code 整合
+- **MCP 服務器配置**: 完整整合到 Claude Code 開發環境
+- **Stdio 模式**: 修復 asyncio 衝突，支援 Claude Code 的 stdio 通訊模式
+- **簡化啟動腳本**: 提供 `run_postgres_mcp.py` 和 `run_mysql_mcp.py` 快速啟動
+
+### 📚 完整使用文檔
+- **Docker Hub 使用指南**: 詳細的部署和使用說明
+- **4大使用情境**: 資料遷移、多資料庫報表、開發環境同步、資料庫監控
+- **測試環境配置**: PostgreSQL + pgAdmin, MySQL + phpMyAdmin
+
+### 🛠️ 技術改進
+- **同步運行模式**: 添加 `run_sync()` 方法支援 MCP 標準
+- **錯誤處理**: 改善 asyncio 相容性和錯誤處理機制
+- **依賴管理**: 完整的 Python 和 Node.js 依賴配置
+
 ## 🆕 版本 0.3.0 更新內容
 
 ### 🚀 重大功能新增
@@ -87,7 +111,7 @@ pg-mcp/
 
 ### 🚀 快速開始
 - ⚡ [**快速開始指南**](QUICK_START.md) - **5分鐘內開始使用！**
-- 🐳 [**Docker Hub 使用指南**](docs/DOCKER_HUB_GUIDE.md) - **官方映像檔部署指南**
+- 🐳 [**Docker Hub 使用指南**](DOCKER_HUB_USAGE.md) - **官方映像檔部署指南**
 
 ### 📚 完整文件
 - 📚 [文件中心](docs/README.md) - 完整的文件導覽和快速導引

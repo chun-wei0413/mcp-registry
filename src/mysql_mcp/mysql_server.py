@@ -496,6 +496,21 @@ class MySQLMCPServer:
             await self.cleanup()
             raise
 
+    def run_sync(self):
+        """Run the MySQL MCP server synchronously for stdio transport"""
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.initialize())
+            self.app.run()
+        except Exception as e:
+            logger.error("mysql_server_run_failed", error=str(e))
+            loop.run_until_complete(self.cleanup())
+            raise
+        finally:
+            loop.close()
+
     def run_sync_http(self, host="0.0.0.0", port=3001):
         """Run the MySQL MCP server with HTTP transport synchronously"""
         import asyncio
