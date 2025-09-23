@@ -307,7 +307,7 @@ main() {
             echo "├── deployment/"
             echo "│   ├── docker-compose.yml        # Docker Compose 配置"
             echo "│   └── k8s/                      # Kubernetes 配置"
-            echo "├── docs/                         # 技術文檔"
+            echo "├── documentation/                # 文檔中心"
             echo "├── scripts/                      # 管理腳本"
             echo "└── README.md                     # 專案說明"
             ;;

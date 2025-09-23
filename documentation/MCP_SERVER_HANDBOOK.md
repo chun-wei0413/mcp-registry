@@ -60,7 +60,7 @@ postgresql-mcp-server/
 │   └── db/               # 資料庫初始化
 │       ├── init-db.sql
 │       └── init-db-dev.sql
-├── docs/                  # 文件
+├── documentation/         # 文檔中心
 │   ├── guides/           # 使用指南
 │   │   └── USER_GUIDE.md
 │   └── MCP_SERVER_HANDBOOK.md

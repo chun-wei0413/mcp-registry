@@ -39,7 +39,7 @@ mcp-registry-java/
 ├── 📁 testing-tools/                 # 測試工具模組
 │   └── 互動式測試工具和自動化測試
 ├── 📁 deployment/                    # 部署配置
-├── 📁 docs/                          # 文檔
+├── 📁 documentation/                 # 文檔中心
 └── pom.xml                           # 根 Maven 配置
 ```
 
@@ -255,9 +255,9 @@ mvn spring-boot:run
 ## 📚 文檔
 
 - [Java 遷移計畫](../JAVA_MIGRATION_PLAN.md) - 詳細的遷移策略和技術決策
-- [API 文檔](docs/api-documentation.md) - MCP 工具 API 參考
-- [Spring Boot 整合指南](docs/spring-boot-integration.md) - Spring Boot 特性使用指南
-- [部署指南](docs/deployment-guide.md) - 生產環境部署說明
+- [API 文檔](../documentation/api-documentation.md) - MCP 工具 API 參考
+- [Spring Boot 整合指南](../documentation/spring-boot-integration.md) - Spring Boot 特性使用指南
+- [部署指南](../documentation/deployment-guide.md) - 生產環境部署說明
 
 ## 🤝 貢獻
 

@@ -330,9 +330,9 @@ management:
 
 ## 🎯 下一步
 
-1. 閱讀 [完整文件](docs/ARCHITECTURE.md)
-2. 查看 [API 參考](docs/API_REFERENCE.md)
-3. 探索 [Java 遷移計畫](docs/JAVA_MIGRATION_PLAN.md)
+1. 閱讀 [完整文件](../ARCHITECTURE.md)
+2. 查看 [API 參考](../API_REFERENCE.md)
+3. 探索 [Java 遷移計畫](../project/JAVA_MIGRATION_PLAN.md)
 4. 嘗試 [測試工具](mcp-registry-java/testing-tools/)
 
 ## 🤝 支援

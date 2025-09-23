@@ -251,16 +251,16 @@ curl http://localhost:3000/health
 **A:**
 1. 查看服務日誌: `docker-compose -f deployment/docker/docker-compose.yml logs -f`
 2. 檢查健康狀態: `curl http://localhost:3000/health`
-3. 參考 [故障排除指南](docs/MCP_SERVER_HANDBOOK.md#故障排除)
+3. 參考 [故障排除指南](../MCP_SERVER_HANDBOOK.md#故障排除)
 
 ---
 
 ## 📚 更多資源
 
-- 📖 [完整使用手冊](docs/MCP_SERVER_HANDBOOK.md) - 從入門到進階的完整指南
-- 📋 [技術指南](docs/guides/USER_GUIDE.md) - 詳細的 API 參考和技術細節
-- 🏗️ [專案結構說明](docs/PROJECT_STRUCTURE.md) - 了解專案組織架構
-- 📚 [文件導覽](docs/README.md) - 文件中心和快速導引
+- 📖 [完整使用手冊](../MCP_SERVER_HANDBOOK.md) - 從入門到進階的完整指南
+- 📋 [技術指南](USER_GUIDE.md) - 詳細的 API 參考和技術細節
+- 🏗️ [專案結構說明](../project/PROJECT_STRUCTURE.md) - 了解專案組織架構
+- 📚 [文件導覽](../README.md) - 文件中心和快速導引
 
 ## 📞 需要協助？
 

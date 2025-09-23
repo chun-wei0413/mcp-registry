@@ -59,7 +59,7 @@ mcp-registry/
 │   ├── run_postgres_mcp.py         # PostgreSQL MCP Server 啟動腳本
 │   └── run_mysql_mcp.py            # MySQL MCP Server 啟動腳本
 │
-├── 📁 docs/                        # 文檔目錄
+├── 📁 documentation/               # 文檔中心
 │   ├── README.md                   # 文檔總覽
 │   ├── ARCHITECTURE.md             # 架構設計文檔
 │   ├── PROJECT_STRUCTURE.md        # 專案結構說明
@@ -114,7 +114,7 @@ mcp-registry/
 - **啟動腳本**: MCP Server 的本地執行腳本
 - **管理腳本**: 專案管理和維護工具
 
-### `/docs/` - 文檔目錄
+### `/documentation/` - 文檔中心
 包含所有技術文檔和說明：
 
 - **設計文檔**: 架構設計和模組規格
@@ -205,7 +205,7 @@ docker-compose -f docker-compose.test.yml up
 
 - [測試指南](testing/TESTING_GUIDE.md) - 如何執行和配置測試
 - [部署指南](deployment/DOCKER_HUB_USAGE.md) - Docker 部署說明
-- [架構設計](docs/ARCHITECTURE.md) - 系統架構說明
+- [架構設計](../ARCHITECTURE.md) - 系統架構說明
 - [快速開始](QUICK_START.md) - 快速上手指南
 
 ---

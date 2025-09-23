@@ -99,7 +99,7 @@ mcp-registry-java/
 │       ├── postgresql-deployment.yaml
 │       └── mysql-deployment.yaml
 │
-├── 📁 docs/                                 # 文檔
+├── 📁 documentation/                        # 文檔中心
 │   ├── java-migration-guide.md
 │   ├── spring-boot-integration.md
 │   └── api-documentation.md
