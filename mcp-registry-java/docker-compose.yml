@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL 資料庫
+  mysql:
+    image: mysql:8.0
+    container_name: mcp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL MCP Server
+  postgresql-mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-postgresql-server/Dockerfile
+    container_name: postgresql-mcp-server-java
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/postgres
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgres
+      MCP_SERVER_PORT: 8080
+      LOGGING_LEVEL_COM_MCP_POSTGRESQL: INFO
+    ports:
+      - "8080:8080"
+      - "8090:8090"  # Actuator port
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MySQL MCP Server
+  mysql-mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-mysql-server/Dockerfile
+    container_name: mysql-mcp-server-java
+    environment:
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/mysql
+      SPRING_R2DBC_USERNAME: root
+      SPRING_R2DBC_PASSWORD: mysql
+      MCP_SERVER_PORT: 8081
+      LOGGING_LEVEL_COM_MCP_MYSQL: INFO
+    ports:
+      - "8081:8081"
+      - "8091:8091"  # Actuator port
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # pgAdmin for PostgreSQL management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mcp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8082:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  # phpMyAdmin for MySQL management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: mcp-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: mysql
+    ports:
+      - "8083:80"
+    depends_on:
+      - mysql
+
+volumes:
+  postgres_data:
+    driver: local
+  mysql_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  default:
+    name: mcp-network

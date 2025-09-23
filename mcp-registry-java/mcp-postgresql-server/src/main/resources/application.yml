@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: postgresql-mcp-server
+
+  # R2DBC 配置（可選，用於默認連線）
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+    pool:
+      initial-size: 1
+      max-size: 10
+      max-idle-time: 30m
+      max-life-time: 2h
+      max-acquire-time: 30s
+
+# MCP Server 配置
+mcp:
+  server:
+    port: 8080
+    stdio: true
+  postgresql:
+    default-pool-size: 10
+    max-query-length: 50000
+    query-timeout: 30s
+    readonly-mode: false
+    allowed-operations:
+      - SELECT
+      - INSERT
+      - UPDATE
+      - DELETE
+      - WITH
+      - EXPLAIN
+    blocked-keywords:
+      - DROP
+      - TRUNCATE
+      - ALTER
+      - GRANT
+      - REVOKE
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 日誌配置
+logging:
+  level:
+    com.mcp.postgresql: INFO
+    org.springframework.ai.mcp: DEBUG
+    io.r2dbc.postgresql: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+
+# 應用資訊
+info:
+  app:
+    name: PostgreSQL MCP Server (Java)
+    description: Java implementation of PostgreSQL MCP Server
+    version: 1.0.0-SNAPSHOT
+    java-version: ${java.version}
+    spring-boot-version: ${spring-boot.version}

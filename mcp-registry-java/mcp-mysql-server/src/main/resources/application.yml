@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: mysql-mcp-server
+
+  # R2DBC 配置
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/mysql
+    username: root
+    password: mysql
+    pool:
+      initial-size: 1
+      max-size: 10
+      max-idle-time: 30m
+      max-life-time: 2h
+      max-acquire-time: 30s
+
+# MCP Server 配置
+mcp:
+  server:
+    port: 8081
+    stdio: true
+  mysql:
+    default-pool-size: 10
+    max-query-length: 50000
+    query-timeout: 30s
+    readonly-mode: false
+    allowed-operations:
+      - SELECT
+      - INSERT
+      - UPDATE
+      - DELETE
+      - WITH
+      - EXPLAIN
+    blocked-keywords:
+      - DROP
+      - TRUNCATE
+      - ALTER
+      - GRANT
+      - REVOKE
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  server:
+    port: 8091
+
+# 日誌配置
+logging:
+  level:
+    com.mcp.mysql: INFO
+    org.springframework.ai.mcp: DEBUG
+    io.asyncer.r2dbc.mysql: INFO
+
+# 應用資訊
+info:
+  app:
+    name: MySQL MCP Server (Java)
+    description: Java implementation of MySQL MCP Server
+    version: 1.0.0-SNAPSHOT
