@@ -33,7 +33,7 @@ public class MockDatabaseQueryExecutor implements DatabaseQueryExecutor {
         return Mono.delay(Duration.ofMillis(200))
                 .map(delay -> new TransactionResult(
                     true,
-                    queries.stream().map(q -> "執行成功: " + q.query).toList(),
+                    queries.stream().map(q -> (Object) ("執行成功: " + q.query)).toList(),
                     null,
                     200L
                 ));

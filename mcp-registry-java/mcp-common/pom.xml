@@ -22,11 +22,13 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- MCP SDK -->
+        <!-- MCP SDK (暫時註解，等待官方發佈) -->
+        <!--
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp</artifactId>
         </dependency>
+        -->
 
         <!-- Jackson for JSON -->
         <dependency>

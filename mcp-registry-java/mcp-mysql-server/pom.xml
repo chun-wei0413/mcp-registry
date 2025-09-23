@@ -33,17 +33,21 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
-        <!-- Spring AI MCP Support -->
+        <!-- Spring AI MCP Support (暫時註解，等待官方發佈) -->
+        <!--
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-mcp-server-spring-boot-starter</artifactId>
         </dependency>
+        -->
 
-        <!-- MCP SDK -->
+        <!-- MCP SDK (暫時註解，等待官方發佈) -->
+        <!--
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
             <artifactId>mcp</artifactId>
         </dependency>
+        -->
 
         <!-- MySQL Driver -->
         <dependency>
@@ -51,7 +55,8 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
-        <!-- R2DBC MySQL -->
+        <!-- R2DBC MySQL (暫時註解，等版本問題解決) -->
+        <!--
         <dependency>
             <groupId>io.asyncer</groupId>
             <artifactId>r2dbc-mysql</artifactId>
@@ -62,11 +67,11 @@
             <artifactId>spring-boot-starter-data-r2dbc</artifactId>
         </dependency>
 
-        <!-- Connection Pool -->
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-pool</artifactId>
         </dependency>
+        -->
 
         <!-- Actuator for monitoring -->
         <dependency>

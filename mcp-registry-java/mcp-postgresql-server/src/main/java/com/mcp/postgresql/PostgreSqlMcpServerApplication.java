@@ -9,12 +9,13 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
  */
 @SpringBootApplication(scanBasePackages = {
     "com.mcp.common",
-    "com.mcp.postgresql"
+    "com.mcp.postgresql",
+    "com.mcpregistry.core"
 })
 @ConfigurationPropertiesScan
-public class PostgreSqlMcpServerApplication {
+public class PostgreSQLMcpServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PostgreSqlMcpServerApplication.class, args);
+        SpringApplication.run(PostgreSQLMcpServerApplication.class, args);
     }
 }

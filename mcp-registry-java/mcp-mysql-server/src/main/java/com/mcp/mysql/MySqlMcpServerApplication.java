@@ -9,12 +9,13 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
  */
 @SpringBootApplication(scanBasePackages = {
     "com.mcp.common",
-    "com.mcp.mysql"
+    "com.mcp.mysql",
+    "com.mcpregistry.core"
 })
 @ConfigurationPropertiesScan
-public class MySqlMcpServerApplication {
+public class MySQLMcpServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MySqlMcpServerApplication.class, args);
+        SpringApplication.run(MySQLMcpServerApplication.class, args);
     }
 }
