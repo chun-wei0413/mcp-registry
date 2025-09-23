@@ -110,6 +110,9 @@ migration_*.sql
 migration_*.json
 migration_*.md
 
+# Reference architecture - DDD + Clean Architecture example (not tracked)
+refactor-to-ca/
+
 # MCP Server data
 mcp-registry-java/*/data/
 mcp-registry-java/*/logs/
