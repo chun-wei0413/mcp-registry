@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
- * PostgreSQL MCP Server 主程式
+ * PostgreSQL MCP Server main application
  */
 @SpringBootApplication(scanBasePackages = {
     "com.mcp.common",

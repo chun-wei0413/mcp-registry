@@ -3,33 +3,33 @@ package com.mcp.common.mcp;
 import java.util.Map;
 
 /**
- * MCP Resource 基礎介面
+ * MCP Resource base interface
  *
- * 定義所有 MCP 資源的基本結構
- * 遵循 Model Context Protocol 規範
+ * Defines the basic structure of all MCP resources
+ * Follows Model Context Protocol specifications
  */
 public interface McpResource {
 
     /**
-     * 資源 URI
+     * Resource URI
      */
     String getResourceUri();
 
     /**
-     * 資源描述
+     * Resource description
      */
     String getDescription();
 
     /**
-     * 資源類型
+     * Resource type
      */
     String getMimeType();
 
     /**
-     * 獲取資源內容
+     * Get resource content
      *
-     * @param parameters 查詢參數
-     * @return 資源內容
+     * @param parameters Query parameters
+     * @return Resource content
      */
     McpResourceResult getContent(Map<String, Object> parameters);
 }

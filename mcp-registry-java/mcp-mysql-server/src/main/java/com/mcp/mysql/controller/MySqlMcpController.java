@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * MySQL MCP Server 主控制器
+ * MySQL MCP Server main controller
  *
- * 協調所有 MCP Tools 和 Resources
- * 提供統一的 MCP 協議介面
+ * Coordinates all MCP Tools and Resources
+ * Provides unified MCP protocol interface
  */
 @RestController
 @RequestMapping("/mcp/mysql")
@@ -28,11 +28,11 @@ public class MySqlMcpController {
     }
 
     /**
-     * 列出所有可用的工具
+     * List all available tools
      */
     @GetMapping("/tools")
     public Map<String, Object> listTools() {
-        log.info("列出所有 MySQL MCP 工具");
+        log.info("Listing all MySQL MCP tools");
 
         return Map.of(
             "tools", List.of(
@@ -49,27 +49,27 @@ public class MySqlMcpController {
     }
 
     /**
-     * 執行工具操作
+     * Execute tool operation
      */
     @PostMapping("/tools/{toolName}")
     public McpToolResult executeTool(@PathVariable String toolName,
                                    @RequestBody Map<String, Object> arguments) {
-        log.info("執行工具: {} with arguments: {}", toolName, arguments.keySet());
+        log.info("Executing tool: {} with arguments: {}", toolName, arguments.keySet());
 
         try {
             return switch (toolName) {
                 case "mysql_connection_management" -> connectionTool.execute(arguments);
-                default -> McpToolResult.error("未知的工具: " + toolName);
+                default -> McpToolResult.error("Unknown tool: " + toolName);
             };
 
         } catch (Exception e) {
-            log.error("工具執行失敗: " + toolName, e);
-            return McpToolResult.error("工具執行失敗: " + e.getMessage());
+            log.error("Tool execution failed: " + toolName, e);
+            return McpToolResult.error("Tool execution failed: " + e.getMessage());
         }
     }
 
     /**
-     * 健康檢查端點
+     * Health check endpoint
      */
     @GetMapping("/health")
     public Map<String, Object> health() {
@@ -82,7 +82,7 @@ public class MySqlMcpController {
     }
 
     /**
-     * 服務資訊端點
+     * Service information endpoint
      */
     @GetMapping("/info")
     public Map<String, Object> info() {

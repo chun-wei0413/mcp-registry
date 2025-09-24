@@ -13,27 +13,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * MySQL 資料庫連線管理服務
+ * MySQL database connection management service
  *
- * 負責管理所有 MySQL 連線的生命週期
- * 提供連線池、健康檢查和連線狀態管理
+ * Responsible for managing the lifecycle of all MySQL connections
+ * Provides connection pooling, health checks and connection state management
  */
 @Service
 public class DatabaseConnectionService {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionService.class);
 
-    // 連線資訊儲存
+    // Connection information storage
     private final Map<String, ConnectionInfo> connections = new ConcurrentHashMap<>();
 
-    // 連線池儲存（實際實現中應使用專業的連線池）
+    // Connection pool storage (should use professional connection pool in actual implementation)
     private final Map<String, DataSource> dataSources = new ConcurrentHashMap<>();
 
-    // 讀寫鎖保護連線操作
+    // Read-write lock to protect connection operations
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
-     * 新增資料庫連線
+     * Add database connection
      */
     public boolean addConnection(ConnectionInfo connectionInfo) {
         lock.writeLock().lock();
@@ -41,34 +41,34 @@ public class DatabaseConnectionService {
             String connectionId = connectionInfo.getConnectionId();
 
             if (connections.containsKey(connectionId)) {
-                log.warn("連線 {} 已存在", connectionId);
+                log.warn("Connection {} already exists", connectionId);
                 return false;
             }
 
-            // 驗證連線資訊
+            // Validate connection information
             if (!validateConnectionInfo(connectionInfo)) {
-                log.error("連線資訊驗證失敗: {}", connectionId);
+                log.error("Connection information validation failed: {}", connectionId);
                 return false;
             }
 
-            // 建立連線池（這裡使用模擬實現）
+            // Create connection pool (using mock implementation here)
             DataSource dataSource = createDataSource(connectionInfo);
 
-            // 測試連線
+            // Test connection
             if (!testDataSourceConnection(dataSource)) {
-                log.error("連線測試失敗: {}", connectionId);
+                log.error("Connection test failed: {}", connectionId);
                 return false;
             }
 
-            // 儲存連線資訊
+            // Store connection information
             connections.put(connectionId, connectionInfo);
             dataSources.put(connectionId, dataSource);
 
-            log.info("成功新增 MySQL 連線: {}", connectionId);
+            log.info("Successfully added MySQL connection: {}", connectionId);
             return true;
 
         } catch (Exception e) {
-            log.error("新增連線失敗: " + connectionInfo.getConnectionId(), e);
+            log.error("Failed to add connection: " + connectionInfo.getConnectionId(), e);
             return false;
         } finally {
             lock.writeLock().unlock();
@@ -76,21 +76,21 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 測試連線狀態
+     * Test connection status
      */
     public boolean testConnection(String connectionId) {
         lock.readLock().lock();
         try {
             DataSource dataSource = dataSources.get(connectionId);
             if (dataSource == null) {
-                log.warn("連線不存在: {}", connectionId);
+                log.warn("Connection does not exist: {}", connectionId);
                 return false;
             }
 
             return testDataSourceConnection(dataSource);
 
         } catch (Exception e) {
-            log.error("測試連線失敗: " + connectionId, e);
+            log.error("Connection test failed: " + connectionId, e);
             return false;
         } finally {
             lock.readLock().unlock();
@@ -98,30 +98,30 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 移除連線
+     * Remove connection
      */
     public boolean removeConnection(String connectionId) {
         lock.writeLock().lock();
         try {
             if (!connections.containsKey(connectionId)) {
-                log.warn("嘗試移除不存在的連線: {}", connectionId);
+                log.warn("Attempting to remove non-existent connection: {}", connectionId);
                 return false;
             }
 
-            // 關閉連線池
+            // Close connection pool
             DataSource dataSource = dataSources.remove(connectionId);
             if (dataSource != null) {
                 closeDataSource(dataSource);
             }
 
-            // 移除連線資訊
+            // Remove connection information
             connections.remove(connectionId);
 
-            log.info("成功移除連線: {}", connectionId);
+            log.info("Successfully removed connection: {}", connectionId);
             return true;
 
         } catch (Exception e) {
-            log.error("移除連線失敗: " + connectionId, e);
+            log.error("Failed to remove connection: " + connectionId, e);
             return false;
         } finally {
             lock.writeLock().unlock();
@@ -129,14 +129,14 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 獲取連線
+     * Get connection
      */
     public Connection getConnection(String connectionId) throws SQLException {
         lock.readLock().lock();
         try {
             DataSource dataSource = dataSources.get(connectionId);
             if (dataSource == null) {
-                throw new SQLException("連線不存在: " + connectionId);
+                throw new SQLException("Connection does not exist: " + connectionId);
             }
 
             return dataSource.getConnection();
@@ -147,7 +147,7 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 獲取所有連線資訊
+     * Get all connection information
      */
     public Map<String, ConnectionInfo> getAllConnections() {
         lock.readLock().lock();
@@ -159,7 +159,7 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 驗證連線資訊
+     * Validate connection information
      */
     private boolean validateConnectionInfo(ConnectionInfo connectionInfo) {
         return connectionInfo.getHost() != null && !connectionInfo.getHost().trim().isEmpty() &&
@@ -170,36 +170,36 @@ public class DatabaseConnectionService {
     }
 
     /**
-     * 建立資料源（簡化實現）
+     * Create data source (simplified implementation)
      */
     private DataSource createDataSource(ConnectionInfo connectionInfo) {
-        // 這裡應該使用真正的連線池實現，如 HikariCP
-        // 目前返回一個模擬的 DataSource
+        // Should use real connection pool implementation like HikariCP
+        // Currently returns a mock DataSource
         return new MockDataSource(connectionInfo);
     }
 
     /**
-     * 測試資料源連線
+     * Test data source connection
      */
     private boolean testDataSourceConnection(DataSource dataSource) {
         try (Connection connection = dataSource.getConnection()) {
-            return connection.isValid(5); // 5秒超時
+            return connection.isValid(5); // 5 second timeout
         } catch (SQLException e) {
-            log.error("連線測試失敗", e);
+            log.error("Connection test failed", e);
             return false;
         }
     }
 
     /**
-     * 關閉資料源
+     * Close data source
      */
     private void closeDataSource(DataSource dataSource) {
-        // 實際實現中應該關閉連線池
-        log.info("關閉資料源: {}", dataSource.getClass().getSimpleName());
+        // Should close connection pool in actual implementation
+        log.info("Closing data source: {}", dataSource.getClass().getSimpleName());
     }
 
     /**
-     * 模擬 DataSource 實現（僅用於編譯通過）
+     * Mock DataSource implementation (for compilation only)
      */
     private static class MockDataSource implements DataSource {
         private final ConnectionInfo connectionInfo;
@@ -210,8 +210,8 @@ public class DatabaseConnectionService {
 
         @Override
         public Connection getConnection() throws SQLException {
-            // 實際實現中應該返回真正的 MySQL 連線
-            throw new SQLException("Mock DataSource - 實際實現待完成");
+            // Should return actual MySQL connection in real implementation
+            throw new SQLException("Mock DataSource - actual implementation pending");
         }
 
         @Override
@@ -219,7 +219,7 @@ public class DatabaseConnectionService {
             return getConnection();
         }
 
-        // 其他 DataSource 方法的空實現
+        // Empty implementations of other DataSource methods
         @Override
         public java.io.PrintWriter getLogWriter() throws SQLException { return null; }
         @Override

@@ -3,25 +3,25 @@ package com.mcpregistry.core.entity;
 import java.util.Objects;
 
 /**
- * 資料庫連線資訊值對象
- * 包含連線所需的所有配置資料
+ * Database connection information value object
+ * Contains all configuration data required for connection
  */
 public class ConnectionInfo {
     private final String host;
     private final int port;
     private final String database;
     private final String username;
-    private final String password; // 實際應用中應加密
+    private final String password; // Should be encrypted in actual applications
     private final ServerType serverType;
     private final int poolSize;
 
     private ConnectionInfo(Builder builder) {
-        this.host = Objects.requireNonNull(builder.host, "主機不能為空");
+        this.host = Objects.requireNonNull(builder.host, "Host cannot be null");
         this.port = validatePort(builder.port);
-        this.database = Objects.requireNonNull(builder.database, "資料庫名稱不能為空");
-        this.username = Objects.requireNonNull(builder.username, "使用者名稱不能為空");
-        this.password = Objects.requireNonNull(builder.password, "密碼不能為空");
-        this.serverType = Objects.requireNonNull(builder.serverType, "伺服器類型不能為空");
+        this.database = Objects.requireNonNull(builder.database, "Database name cannot be null");
+        this.username = Objects.requireNonNull(builder.username, "Username cannot be null");
+        this.password = Objects.requireNonNull(builder.password, "Password cannot be null");
+        this.serverType = Objects.requireNonNull(builder.serverType, "Server type cannot be null");
         this.poolSize = validatePoolSize(builder.poolSize);
     }
 
@@ -31,14 +31,14 @@ public class ConnectionInfo {
 
     private int validatePort(int port) {
         if (port <= 0 || port > 65535) {
-            throw new IllegalArgumentException("埠號必須在 1-65535 之間");
+            throw new IllegalArgumentException("Port number must be between 1-65535");
         }
         return port;
     }
 
     private int validatePoolSize(int poolSize) {
         if (poolSize <= 0 || poolSize > 100) {
-            throw new IllegalArgumentException("連線池大小必須在 1-100 之間");
+            throw new IllegalArgumentException("Connection pool size must be between 1-100");
         }
         return poolSize;
     }
@@ -82,7 +82,7 @@ public class ConnectionInfo {
         private String username;
         private String password;
         private ServerType serverType;
-        private int poolSize = 10; // 預設值
+        private int poolSize = 10; // Default value
 
         public Builder host(String host) {
             this.host = host;

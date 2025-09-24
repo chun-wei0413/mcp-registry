@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 查詢結果模型
+ * Query result model
  */
 @Data
 @Builder
@@ -18,54 +18,54 @@ import java.util.Map;
 public class QueryResult {
 
     /**
-     * 查詢是否成功
+     * Whether the query was successful
      */
     private final Boolean success;
 
     /**
-     * 結果集行數
+     * Number of rows in result set
      */
     private final Integer rowCount;
 
     /**
-     * 結果資料
+     * Result data
      */
     private final List<Map<String, Object>> rows;
 
     /**
-     * 欄位資訊
+     * Column information
      */
     private final List<ColumnInfo> columns;
 
     /**
-     * 執行時間（毫秒）
+     * Execution time (milliseconds)
      */
     private final Long executionTimeMs;
 
     /**
-     * 查詢開始時間
+     * Query start time
      */
     @Builder.Default
     private final Instant startTime = Instant.now();
 
     /**
-     * 錯誤訊息（如果有）
+     * Error message (if any)
      */
     private final String errorMessage;
 
     /**
-     * 執行計畫（如果啟用）
+     * Execution plan (if enabled)
      */
     private final String executionPlan;
 
     /**
-     * 是否有更多結果
+     * Whether there are more results
      */
     @Builder.Default
     private final Boolean hasMore = false;
 
     /**
-     * 欄位資訊模型
+     * Column information model
      */
     @Data
     @Builder
@@ -79,7 +79,7 @@ public class QueryResult {
     }
 
     /**
-     * 建立成功結果
+     * Create successful result
      */
     public static QueryResult success(List<Map<String, Object>> rows,
                                     List<ColumnInfo> columns,
@@ -94,7 +94,7 @@ public class QueryResult {
     }
 
     /**
-     * 建立失敗結果
+     * Create failure result
      */
     public static QueryResult failure(String errorMessage, long executionTimeMs) {
         return QueryResult.builder()

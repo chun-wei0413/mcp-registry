@@ -7,25 +7,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MCP 共用配置
+ * MCP common configuration
  */
 @Configuration
 public class McpCommonConfig {
 
     /**
-     * Jackson ObjectMapper 配置
+     * Jackson ObjectMapper configuration
      */
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
-        // 註冊 Java Time 模組
+        // Register Java Time module
         mapper.registerModule(new JavaTimeModule());
 
-        // 使用 snake_case 命名策略
+        // Use snake_case naming strategy
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
-        // 忽略未知屬性
+        // Ignore unknown properties
         mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return mapper;

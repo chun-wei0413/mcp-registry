@@ -9,7 +9,7 @@ import lombok.extern.jackson.Jacksonized;
 import java.util.List;
 
 /**
- * 查詢請求模型
+ * Query request model
  */
 @Data
 @Builder
@@ -17,37 +17,37 @@ import java.util.List;
 public class QueryRequest {
 
     /**
-     * 連線識別碼
+     * Connection identifier
      */
     @NotBlank(message = "Connection ID cannot be blank")
     private final String connectionId;
 
     /**
-     * SQL 查詢語句
+     * SQL query statement
      */
     @NotBlank(message = "Query cannot be blank")
     @Size(max = 50000, message = "Query length cannot exceed 50000 characters")
     private final String query;
 
     /**
-     * 查詢參數
+     * Query parameters
      */
     private final List<Object> params;
 
     /**
-     * 查詢超時時間（秒）
+     * Query timeout duration (seconds)
      */
     @Builder.Default
     private final Integer timeoutSeconds = 30;
 
     /**
-     * 最大結果集大小
+     * Maximum result set size
      */
     @Builder.Default
     private final Integer maxRows = 10000;
 
     /**
-     * 是否要執行計畫分析
+     * Whether to execute execution plan analysis
      */
     @Builder.Default
     private final Boolean explain = false;

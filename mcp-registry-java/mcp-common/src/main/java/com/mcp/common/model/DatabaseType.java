@@ -1,7 +1,7 @@
 package com.mcp.common.model;
 
 /**
- * 支援的資料庫類型
+ * Supported database types
  */
 public enum DatabaseType {
     POSTGRESQL("PostgreSQL", "org.postgresql.Driver", "postgresql"),
@@ -30,14 +30,14 @@ public enum DatabaseType {
     }
 
     /**
-     * 建立 JDBC URL
+     * Build JDBC URL
      */
     public String buildJdbcUrl(String host, int port, String database) {
         return String.format("jdbc:%s://%s:%d/%s", urlPrefix, host, port, database);
     }
 
     /**
-     * 從字串解析資料庫類型
+     * Parse database type from string
      */
     public static DatabaseType fromString(String type) {
         for (DatabaseType dbType : values()) {
@@ -45,6 +45,6 @@ public enum DatabaseType {
                 return dbType;
             }
         }
-        throw new IllegalArgumentException("不支援的資料庫類型: " + type);
+        throw new IllegalArgumentException("Unsupported database type: " + type);
     }
 }

@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Clean Architecture 依賴注入配置
+ * Clean Architecture dependency injection configuration
  *
- * 配置各層之間的依賴關係，遵循依賴倒轉原則
- * 外層依賴內層，通過介面（Ports）進行通信
+ * Configures dependency relationships between layers, following dependency inversion principle
+ * Outer layers depend on inner layers, communicating through interfaces (Ports)
  */
 @Configuration
 public class CleanArchitectureConfig {
@@ -57,5 +57,5 @@ public class CleanArchitectureConfig {
     }
 
     // ================== Input Adapters (Interface Layer) ==================
-    // MCP Tools 和 Resources 會自動注入上述的 Use Cases
+    // MCP Tools and Resources will automatically inject the above Use Cases
 }

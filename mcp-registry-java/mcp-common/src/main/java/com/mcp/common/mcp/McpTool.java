@@ -3,33 +3,33 @@ package com.mcp.common.mcp;
 import java.util.Map;
 
 /**
- * MCP Tool 基礎介面
+ * MCP Tool base interface
  *
- * 定義所有 MCP 工具的基本結構
- * 遵循 Model Context Protocol 規範
+ * Defines the basic structure of all MCP tools
+ * Follows Model Context Protocol specifications
  */
 public interface McpTool {
 
     /**
-     * 工具名稱（MCP 協定中的 tool name）
+     * Tool name (tool name in MCP protocol)
      */
     String getToolName();
 
     /**
-     * 工具描述
+     * Tool description
      */
     String getDescription();
 
     /**
-     * 工具參數 Schema（JSON Schema 格式）
+     * Tool parameter Schema (JSON Schema format)
      */
     Map<String, Object> getParameterSchema();
 
     /**
-     * 執行工具操作
+     * Execute tool operation
      *
-     * @param arguments 工具參數
-     * @return 執行結果
+     * @param arguments Tool parameters
+     * @return Execution result
      */
     McpToolResult execute(Map<String, Object> arguments);
 }

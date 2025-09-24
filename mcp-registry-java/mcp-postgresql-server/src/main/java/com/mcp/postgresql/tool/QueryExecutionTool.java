@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * PostgreSQL 查詢執行工具
+ * PostgreSQL query execution tool
  *
- * 提供 MCP 查詢執行功能:
- * - execute_query: 執行 SELECT 查詢
- * - execute_update: 執行 INSERT/UPDATE/DELETE
- * - execute_transaction: 執行事務操作
- * - batch_execute: 批次執行查詢
+ * Provides MCP query execution functionality:
+ * - execute_query: Execute SELECT queries
+ * - execute_update: Execute INSERT/UPDATE/DELETE
+ * - execute_transaction: Execute transaction operations
+ * - batch_execute: Execute batch queries
  */
 @Component
 public class QueryExecutionTool implements McpTool {
@@ -34,7 +34,7 @@ public class QueryExecutionTool implements McpTool {
 
     @Override
     public String getDescription() {
-        return "PostgreSQL 查詢執行工具，支援 SELECT、UPDATE、事務和批次操作";
+        return "PostgreSQL query execution tool, supports SELECT, UPDATE, transactions and batch operations";
     }
 
     @Override
@@ -45,20 +45,20 @@ public class QueryExecutionTool implements McpTool {
                 "action", Map.of(
                     "type", "string",
                     "enum", new String[]{"query", "update", "transaction", "batch"},
-                    "description", "操作類型: query(查詢), update(更新), transaction(事務), batch(批次)"
+                    "description", "Operation type: query(select), update(modify), transaction(atomic), batch(bulk)"
                 ),
                 "connectionId", Map.of(
                     "type", "string",
-                    "description", "連線識別碼"
+                    "description", "Connection identifier"
                 ),
                 "sql", Map.of(
                     "type", "string",
-                    "description", "SQL 語句"
+                    "description", "SQL statement"
                 ),
                 "parameters", Map.of(
                     "type", "array",
                     "items", Map.of("type", "string"),
-                    "description", "SQL 參數列表"
+                    "description", "SQL parameter list"
                 ),
                 "queries", Map.of(
                     "type", "array",
@@ -69,17 +69,17 @@ public class QueryExecutionTool implements McpTool {
                             "parameters", Map.of("type", "array", "items", Map.of("type", "string"))
                         )
                     ),
-                    "description", "批次查詢列表"
+                    "description", "Batch query list"
                 ),
                 "fetchSize", Map.of(
                     "type", "integer",
                     "default", 1000,
-                    "description", "每次提取的記錄數"
+                    "description", "Number of records to fetch per request"
                 ),
                 "timeout", Map.of(
                     "type", "integer",
                     "default", 30,
-                    "description", "查詢超時時間（秒）"
+                    "description", "Query timeout in seconds"
                 )
             ),
             "required", new String[]{"action", "connectionId"}
@@ -93,7 +93,7 @@ public class QueryExecutionTool implements McpTool {
             String connectionId = (String) arguments.get("connectionId");
 
             if (connectionId == null || connectionId.trim().isEmpty()) {
-                return McpToolResult.error("Connection ID 不能為空");
+                return McpToolResult.error("Connection ID cannot be empty");
             }
 
             return switch (action) {
@@ -101,11 +101,11 @@ public class QueryExecutionTool implements McpTool {
                 case "update" -> executeUpdate(arguments);
                 case "transaction" -> executeTransaction(arguments);
                 case "batch" -> executeBatch(arguments);
-                default -> McpToolResult.error("不支援的操作: " + action);
+                default -> McpToolResult.error("Unsupported operation: " + action);
             };
 
         } catch (Exception e) {
-            return McpToolResult.error("查詢執行失敗: " + e.getMessage());
+            return McpToolResult.error("Query execution failed: " + e.getMessage());
         }
     }
 
@@ -118,7 +118,7 @@ public class QueryExecutionTool implements McpTool {
             Integer fetchSize = (Integer) arguments.get("fetchSize");
 
             if (sql == null || sql.trim().isEmpty()) {
-                return McpToolResult.error("SQL 語句不能為空");
+                return McpToolResult.error("SQL statement cannot be empty");
             }
 
             QueryResult result = queryService.executeQuery(
@@ -129,7 +129,7 @@ public class QueryExecutionTool implements McpTool {
             );
 
             return McpToolResult.success(
-                "查詢執行成功",
+                "Query executed successfully",
                 Map.of(
                     "result", result,
                     "rowCount", result.getRowCount(),
@@ -138,7 +138,7 @@ public class QueryExecutionTool implements McpTool {
             );
 
         } catch (Exception e) {
-            return McpToolResult.error("執行查詢失敗: " + e.getMessage());
+            return McpToolResult.error("Query execution failed: " + e.getMessage());
         }
     }
 
@@ -150,13 +150,13 @@ public class QueryExecutionTool implements McpTool {
             List<Object> parameters = (List<Object>) arguments.get("parameters");
 
             if (sql == null || sql.trim().isEmpty()) {
-                return McpToolResult.error("SQL 語句不能為空");
+                return McpToolResult.error("SQL statement cannot be empty");
             }
 
             int affectedRows = queryService.executeUpdate(connectionId, sql, parameters);
 
             return McpToolResult.success(
-                "更新執行成功",
+                "Update executed successfully",
                 Map.of(
                     "affectedRows", affectedRows,
                     "sql", sql
@@ -164,7 +164,7 @@ public class QueryExecutionTool implements McpTool {
             );
 
         } catch (Exception e) {
-            return McpToolResult.error("執行更新失敗: " + e.getMessage());
+            return McpToolResult.error("Update execution failed: " + e.getMessage());
         }
     }
 
@@ -175,13 +175,13 @@ public class QueryExecutionTool implements McpTool {
             List<Map<String, Object>> queries = (List<Map<String, Object>>) arguments.get("queries");
 
             if (queries == null || queries.isEmpty()) {
-                return McpToolResult.error("事務查詢列表不能為空");
+                return McpToolResult.error("Transaction query list cannot be empty");
             }
 
             List<Object> results = queryService.executeTransaction(connectionId, queries);
 
             return McpToolResult.success(
-                "事務執行成功",
+                "Transaction executed successfully",
                 Map.of(
                     "results", results,
                     "queryCount", queries.size()
@@ -189,7 +189,7 @@ public class QueryExecutionTool implements McpTool {
             );
 
         } catch (Exception e) {
-            return McpToolResult.error("執行事務失敗: " + e.getMessage());
+            return McpToolResult.error("Transaction execution failed: " + e.getMessage());
         }
     }
 
@@ -201,17 +201,17 @@ public class QueryExecutionTool implements McpTool {
             List<List<Object>> parametersList = (List<List<Object>>) arguments.get("parameters");
 
             if (sql == null || sql.trim().isEmpty()) {
-                return McpToolResult.error("SQL 語句不能為空");
+                return McpToolResult.error("SQL statement cannot be empty");
             }
 
             if (parametersList == null || parametersList.isEmpty()) {
-                return McpToolResult.error("批次參數列表不能為空");
+                return McpToolResult.error("Batch parameter list cannot be empty");
             }
 
             int[] results = queryService.executeBatch(connectionId, sql, parametersList);
 
             return McpToolResult.success(
-                "批次執行成功",
+                "Batch executed successfully",
                 Map.of(
                     "batchResults", results,
                     "batchSize", results.length,
@@ -220,7 +220,7 @@ public class QueryExecutionTool implements McpTool {
             );
 
         } catch (Exception e) {
-            return McpToolResult.error("執行批次操作失敗: " + e.getMessage());
+            return McpToolResult.error("Batch execution failed: " + e.getMessage());
         }
     }
 }

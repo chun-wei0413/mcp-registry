@@ -3,15 +3,15 @@ package com.mcpregistry.core.entity;
 import java.util.Objects;
 
 /**
- * MCP Server 識別碼值對象
- * 不可變且具有值語義
+ * MCP Server identifier value object
+ * Immutable and has value semantics
  */
 public class ServerId {
     private final String value;
 
     private ServerId(String value) {
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("ServerId 不能為空");
+            throw new IllegalArgumentException("ServerId cannot be empty");
         }
         this.value = value.trim();
     }

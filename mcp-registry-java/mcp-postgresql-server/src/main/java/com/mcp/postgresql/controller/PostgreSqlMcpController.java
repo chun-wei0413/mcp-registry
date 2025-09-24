@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * PostgreSQL MCP Server 主控制器
+ * PostgreSQL MCP Server main controller
  *
- * 協調所有 MCP Tools 和 Resources
- * 提供統一的 MCP 協議介面
+ * Coordinates all MCP Tools and Resources
+ * Provides unified MCP protocol interface
  */
 @RestController
 @RequestMapping("/mcp/postgresql")
@@ -43,11 +43,11 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 列出所有可用的工具
+     * List all available tools
      */
     @GetMapping("/tools")
     public Map<String, Object> listTools() {
-        log.info("列出所有 PostgreSQL MCP 工具");
+        log.info("Listing all PostgreSQL MCP tools");
 
         return Map.of(
             "tools", List.of(
@@ -62,11 +62,11 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 列出所有可用的資源
+     * List all available resources
      */
     @GetMapping("/resources")
     public Map<String, Object> listResources() {
-        log.info("列出所有 PostgreSQL MCP 資源");
+        log.info("Listing all PostgreSQL MCP resources");
 
         return Map.of(
             "resources", List.of(
@@ -79,53 +79,53 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 執行工具操作
+     * Execute tool operation
      */
     @PostMapping("/tools/{toolName}")
     public McpToolResult executeTool(@PathVariable String toolName,
                                    @RequestBody Map<String, Object> arguments) {
-        log.info("執行工具: {} with arguments: {}", toolName, arguments.keySet());
+        log.info("Executing tool: {} with arguments: {}", toolName, arguments.keySet());
 
         try {
             return switch (toolName) {
                 case "postgresql_connection_management" -> connectionTool.execute(arguments);
                 case "postgresql_query_execution" -> queryTool.execute(arguments);
                 case "postgresql_schema_management" -> schemaTool.execute(arguments);
-                default -> McpToolResult.error("未知的工具: " + toolName);
+                default -> McpToolResult.error("Unknown tool: " + toolName);
             };
 
         } catch (Exception e) {
-            log.error("工具執行失敗: " + toolName, e);
-            return McpToolResult.error("工具執行失敗: " + e.getMessage());
+            log.error("Tool execution failed: " + toolName, e);
+            return McpToolResult.error("Tool execution failed: " + e.getMessage());
         }
     }
 
     /**
-     * 獲取資源內容
+     * Get resource content
      */
     @GetMapping("/resources/{resourceType}")
     public McpResourceResult getResource(@PathVariable String resourceType,
                                        @RequestParam Map<String, Object> parameters) {
-        log.info("獲取資源: {} with parameters: {}", resourceType, parameters.keySet());
+        log.info("Getting resource: {} with parameters: {}", resourceType, parameters.keySet());
 
         try {
-            // 添加資源類型到參數中
+            // Add resource type to parameters
             parameters.put("type", resourceType);
 
             return switch (resourceType) {
                 case "connections", "healthy_connections", "connection_details" ->
                     connectionResource.getContent(parameters);
-                default -> McpResourceResult.error("未知的資源類型: " + resourceType);
+                default -> McpResourceResult.error("Unknown resource type: " + resourceType);
             };
 
         } catch (Exception e) {
-            log.error("資源獲取失敗: " + resourceType, e);
-            return McpResourceResult.error("資源獲取失敗: " + e.getMessage());
+            log.error("Resource retrieval failed: " + resourceType, e);
+            return McpResourceResult.error("Resource retrieval failed: " + e.getMessage());
         }
     }
 
     /**
-     * 健康檢查端點
+     * Health check endpoint
      */
     @GetMapping("/health")
     public Map<String, Object> health() {
@@ -138,7 +138,7 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 服務資訊端點
+     * Service information endpoint
      */
     @GetMapping("/info")
     public Map<String, Object> info() {
@@ -158,7 +158,7 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 建立工具資訊
+     * Create tool information
      */
     private Map<String, Object> createToolInfo(McpTool tool) {
         return Map.of(
@@ -169,7 +169,7 @@ public class PostgreSqlMcpController {
     }
 
     /**
-     * 建立資源資訊
+     * Create resource information
      */
     private Map<String, Object> createResourceInfo(McpResource resource) {
         return Map.of(

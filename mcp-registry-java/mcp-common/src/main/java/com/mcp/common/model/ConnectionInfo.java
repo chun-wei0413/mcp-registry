@@ -11,7 +11,7 @@ import lombok.extern.jackson.Jacksonized;
 import java.time.Instant;
 
 /**
- * 資料庫連線資訊模型
+ * Database connection information model
  */
 @Data
 @Builder
@@ -19,19 +19,19 @@ import java.time.Instant;
 public class ConnectionInfo {
 
     /**
-     * 連線唯一識別碼
+     * Connection unique identifier
      */
     @NotBlank(message = "Connection ID cannot be blank")
     private final String connectionId;
 
     /**
-     * 資料庫主機位址
+     * Database host address
      */
     @NotBlank(message = "Host cannot be blank")
     private final String host;
 
     /**
-     * 資料庫埠號
+     * Database port number
      */
     @NotNull(message = "Port cannot be null")
     @Min(value = 1, message = "Port must be greater than 0")
@@ -39,49 +39,49 @@ public class ConnectionInfo {
     private final Integer port;
 
     /**
-     * 資料庫名稱
+     * Database name
      */
     @NotBlank(message = "Database name cannot be blank")
     private final String database;
 
     /**
-     * 使用者名稱
+     * Username
      */
     @NotBlank(message = "Username cannot be blank")
     private final String username;
 
     /**
-     * 密碼
+     * Password
      */
     @NotBlank(message = "Password cannot be blank")
     private final String password;
 
     /**
-     * 連線池大小
+     * Connection pool size
      */
     @Builder.Default
     private final Integer poolSize = 10;
 
     /**
-     * 是否為只讀模式
+     * Whether it is read-only mode
      */
     @Builder.Default
     private final Boolean readOnly = false;
 
     /**
-     * 連線建立時間
+     * Connection creation time
      */
     @Builder.Default
     private final Instant createdAt = Instant.now();
 
     /**
-     * 連線狀態
+     * Connection status
      */
     @Builder.Default
     private final ConnectionStatus status = ConnectionStatus.DISCONNECTED;
 
     /**
-     * 連線狀態枚舉
+     * Connection status enumeration
      */
     public enum ConnectionStatus {
         CONNECTED,

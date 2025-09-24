@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
- * MySQL MCP Server 主程式
+ * MySQL MCP Server main application class
  */
 @SpringBootApplication(scanBasePackages = {
     "com.mcp.common",

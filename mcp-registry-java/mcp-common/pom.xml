@@ -22,7 +22,7 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- MCP SDK (暫時註解，等待官方發佈) -->
+        <!-- MCP SDK (temporarily commented, waiting for official release) -->
         <!--
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>

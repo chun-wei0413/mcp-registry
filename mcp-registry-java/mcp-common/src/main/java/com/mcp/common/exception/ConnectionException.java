@@ -1,7 +1,7 @@
 package com.mcp.common.exception;
 
 /**
- * 資料庫連線相關例外
+ * Database connection-related exceptions
  */
 public class ConnectionException extends McpException {
 
@@ -14,7 +14,7 @@ public class ConnectionException extends McpException {
     }
 
     /**
-     * 連線不存在例外
+     * Connection not found exception
      */
     public static class ConnectionNotFound extends ConnectionException {
         public ConnectionNotFound(String connectionId) {
@@ -23,7 +23,7 @@ public class ConnectionException extends McpException {
     }
 
     /**
-     * 連線已存在例外
+     * Connection already exists exception
      */
     public static class ConnectionAlreadyExists extends ConnectionException {
         public ConnectionAlreadyExists(String connectionId) {
@@ -32,7 +32,7 @@ public class ConnectionException extends McpException {
     }
 
     /**
-     * 連線建立失敗例外
+     * Connection establishment failure exception
      */
     public static class ConnectionFailure extends ConnectionException {
         public ConnectionFailure(String connectionId, Throwable cause) {

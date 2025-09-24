@@ -1,15 +1,15 @@
 package com.mcp.common.model;
 
 /**
- * 資料庫連線狀態
+ * Database connection status
  */
 public enum ConnectionStatus {
-    CREATED("已建立"),
-    CONNECTING("連線中"),
-    CONNECTED("已連線"),
-    DISCONNECTED("已斷線"),
-    ERROR("錯誤"),
-    TIMEOUT("逾時");
+    CREATED("Created"),
+    CONNECTING("Connecting"),
+    CONNECTED("Connected"),
+    DISCONNECTED("Disconnected"),
+    ERROR("Error"),
+    TIMEOUT("Timeout");
 
     private final String description;
 

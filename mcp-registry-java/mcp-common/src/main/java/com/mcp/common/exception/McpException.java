@@ -1,7 +1,7 @@
 package com.mcp.common.exception;
 
 /**
- * MCP 相關例外的基礎類別
+ * Base class for MCP-related exceptions
  */
 public class McpException extends RuntimeException {
 

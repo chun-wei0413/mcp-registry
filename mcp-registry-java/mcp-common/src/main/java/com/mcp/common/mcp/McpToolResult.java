@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * MCP Tool 執行結果
+ * MCP Tool execution result
  *
- * 標準化的工具執行結果格式
+ * Standardized tool execution result format
  */
 public class McpToolResult {
 

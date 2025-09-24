@@ -5,13 +5,9 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.mcp.registry</groupId>
-        <artifactId>mcp-registry-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
+    <groupId>com.mcp.registry</groupId>
     <artifactId>mcp-registry-java</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>MCP Registry Java</name>
@@ -22,23 +18,23 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Spring Boot版本 -->
+        <!-- Spring Boot version -->
         <spring-boot.version>3.2.1</spring-boot.version>
         <spring-ai.version>1.0.0-M4</spring-ai.version>
 
-        <!-- MCP SDK版本 -->
+        <!-- MCP SDK version -->
         <mcp-sdk.version>1.0.0</mcp-sdk.version>
 
-        <!-- 資料庫驅動版本 -->
+        <!-- Database driver versions -->
         <postgresql.version>42.7.1</postgresql.version>
         <mysql.version>8.3.0</mysql.version>
 
-        <!-- 測試相關版本 -->
+        <!-- Testing related versions -->
         <junit.version>5.10.1</junit.version>
         <testcontainers.version>1.19.3</testcontainers.version>
         <mockito.version>5.8.0</mockito.version>
 
-        <!-- 工具庫版本 -->
+        <!-- Utility library versions -->
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <jackson.version>2.16.1</jackson.version>
@@ -81,7 +77,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- MCP SDK (暫時註解，等待官方發佈) -->
+            <!-- MCP SDK (temporarily commented, waiting for official release) -->
             <!--
             <dependency>
                 <groupId>io.modelcontextprotocol.sdk</groupId>
@@ -90,7 +86,7 @@
             </dependency>
             -->
 
-            <!-- 資料庫驅動 -->
+            <!-- Database drivers -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
@@ -103,7 +99,7 @@
                 <version>${mysql.version}</version>
             </dependency>
 
-            <!-- R2DBC 驅動 (由 Spring Boot BOM 管理版本) -->
+            <!-- R2DBC drivers (version managed by Spring Boot BOM) -->
             <dependency>
                 <groupId>io.r2dbc</groupId>
                 <artifactId>r2dbc-postgresql</artifactId>
@@ -114,7 +110,7 @@
                 <artifactId>r2dbc-mysql</artifactId>
             </dependency>
 
-            <!-- Spring AI (暫時註解，等待官方發佈) -->
+            <!-- Spring AI (temporarily commented, waiting for official release) -->
             <!--
             <dependency>
                 <groupId>org.springframework.ai</groupId>
@@ -129,7 +125,7 @@
             </dependency>
             -->
 
-            <!-- 工具庫 -->
+            <!-- Utility libraries -->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -143,7 +139,7 @@
                 <version>${mapstruct.version}</version>
             </dependency>
 
-            <!-- 內部模組依賴 -->
+            <!-- Internal module dependencies -->
             <dependency>
                 <groupId>com.mcp.registry</groupId>
                 <artifactId>mcp-common</artifactId>

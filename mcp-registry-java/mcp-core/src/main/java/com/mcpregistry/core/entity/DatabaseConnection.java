@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * 資料庫連線聚合根
- * 管理單一資料庫連線的生命週期和狀態
+ * Database connection aggregate root
+ * Manages the lifecycle and state of a single database connection
  */
 public class DatabaseConnection {
 
@@ -17,19 +17,19 @@ public class DatabaseConnection {
     private String lastError;
 
     public DatabaseConnection(ConnectionId id, ConnectionInfo connectionInfo) {
-        this.id = Objects.requireNonNull(id, "ConnectionId 不能為空");
-        this.connectionInfo = Objects.requireNonNull(connectionInfo, "ConnectionInfo 不能為空");
+        this.id = Objects.requireNonNull(id, "ConnectionId cannot be null");
+        this.connectionInfo = Objects.requireNonNull(connectionInfo, "ConnectionInfo cannot be null");
         this.status = ConnectionStatus.CREATED;
         this.createdAt = LocalDateTime.now();
         this.lastAccessedAt = this.createdAt;
     }
 
     /**
-     * 標記連線為已連接狀態
+     * Mark connection as connected state
      */
     public void markConnected() {
         if (this.status == ConnectionStatus.DISCONNECTED) {
-            throw new IllegalStateException("已斷線的連線無法重新連接，請創建新連線");
+            throw new IllegalStateException("Disconnected connection cannot be reconnected, please create a new connection");
         }
         this.status = ConnectionStatus.CONNECTED;
         this.lastAccessedAt = LocalDateTime.now();
@@ -37,16 +37,16 @@ public class DatabaseConnection {
     }
 
     /**
-     * 標記連線為連接失敗
+     * Mark connection as connection failed
      */
     public void markConnectionFailed(String error) {
         this.status = ConnectionStatus.FAILED;
-        this.lastError = Objects.requireNonNull(error, "錯誤訊息不能為空");
+        this.lastError = Objects.requireNonNull(error, "Error message cannot be null");
         this.lastAccessedAt = LocalDateTime.now();
     }
 
     /**
-     * 標記連線為斷線狀態
+     * Mark connection as disconnected state
      */
     public void markDisconnected() {
         this.status = ConnectionStatus.DISCONNECTED;
@@ -54,28 +54,28 @@ public class DatabaseConnection {
     }
 
     /**
-     * 更新最後存取時間
+     * Update last accessed time
      */
     public void updateLastAccessed() {
         this.lastAccessedAt = LocalDateTime.now();
     }
 
     /**
-     * 檢查連線是否健康
+     * Check if connection is healthy
      */
     public boolean isHealthy() {
         return status == ConnectionStatus.CONNECTED;
     }
 
     /**
-     * 檢查連線是否可用
+     * Check if connection is available
      */
     public boolean isAvailable() {
         return status == ConnectionStatus.CONNECTED || status == ConnectionStatus.CREATED;
     }
 
     /**
-     * 獲取連線的顯示資訊（不包含敏感資料）
+     * Get connection display information (without sensitive data)
      */
     public String getDisplayInfo() {
         return String.format("%s://%s:%d/%s (%s)",

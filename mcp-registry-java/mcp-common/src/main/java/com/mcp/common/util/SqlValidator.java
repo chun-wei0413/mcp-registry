@@ -9,29 +9,29 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * SQL 安全驗證工具
+ * SQL security validation utility
  */
 @Component
 public class SqlValidator {
 
-    // 預設被阻擋的關鍵字
+    // Default blocked keywords
     private static final Set<String> DEFAULT_BLOCKED_KEYWORDS = Set.of(
         "DROP", "TRUNCATE", "DELETE", "ALTER", "CREATE", "GRANT", "REVOKE"
     );
 
-    // 預設允許的操作
+    // Default allowed operations
     private static final Set<String> DEFAULT_ALLOWED_OPERATIONS = Set.of(
         "SELECT", "INSERT", "UPDATE", "WITH", "EXPLAIN"
     );
 
-    // 危險模式檢測
+    // Dangerous pattern detection
     private static final List<Pattern> DANGEROUS_PATTERNS = Arrays.asList(
-        Pattern.compile(".*;.*", Pattern.CASE_INSENSITIVE), // 多語句
-        Pattern.compile("--.*", Pattern.CASE_INSENSITIVE),  // 註解
-        Pattern.compile("/\\*.*\\*/", Pattern.CASE_INSENSITIVE), // 區塊註解
+        Pattern.compile(".*;.*", Pattern.CASE_INSENSITIVE), // Multiple statements
+        Pattern.compile("--.*", Pattern.CASE_INSENSITIVE),  // Comments
+        Pattern.compile("/\\*.*\\*/", Pattern.CASE_INSENSITIVE), // Block comments
         Pattern.compile("\\bunion\\s+select\\b", Pattern.CASE_INSENSITIVE), // UNION SELECT
-        Pattern.compile("\\bexec\\s*\\(", Pattern.CASE_INSENSITIVE), // 動態執行
-        Pattern.compile("\\bsp_executesql\\b", Pattern.CASE_INSENSITIVE) // SQL Server 動態執行
+        Pattern.compile("\\bexec\\s*\\(", Pattern.CASE_INSENSITIVE), // Dynamic execution
+        Pattern.compile("\\bsp_executesql\\b", Pattern.CASE_INSENSITIVE) // SQL Server dynamic execution
     );
 
     private final Set<String> blockedKeywords;
@@ -53,7 +53,7 @@ public class SqlValidator {
     }
 
     /**
-     * 驗證 SQL 查詢安全性
+     * Validate SQL query security
      */
     public void validateQuery(String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -62,23 +62,23 @@ public class SqlValidator {
 
         String normalizedQuery = query.trim().toUpperCase();
 
-        // 檢查查詢長度
+        // Check query length
         if (query.length() > maxQueryLength) {
             throw new QueryException("Query length exceeds maximum allowed: " + maxQueryLength);
         }
 
-        // 檢查被阻擋的關鍵字
+        // Check blocked keywords
         validateBlockedKeywords(normalizedQuery);
 
-        // 檢查允許的操作
+        // Check allowed operations
         validateAllowedOperations(normalizedQuery);
 
-        // 檢查危險模式
+        // Check dangerous patterns
         validateDangerousPatterns(query);
     }
 
     /**
-     * 檢查被阻擋的關鍵字
+     * Check blocked keywords
      */
     private void validateBlockedKeywords(String query) {
         for (String keyword : blockedKeywords) {
@@ -89,7 +89,7 @@ public class SqlValidator {
     }
 
     /**
-     * 檢查允許的操作
+     * Check allowed operations
      */
     private void validateAllowedOperations(String query) {
         String firstWord = getFirstWord(query);
@@ -99,7 +99,7 @@ public class SqlValidator {
     }
 
     /**
-     * 檢查危險模式
+     * Check dangerous patterns
      */
     private void validateDangerousPatterns(String query) {
         for (Pattern pattern : DANGEROUS_PATTERNS) {
@@ -112,7 +112,7 @@ public class SqlValidator {
     }
 
     /**
-     * 檢查是否包含關鍵字
+     * Check if contains keyword
      */
     private boolean containsKeyword(String query, String keyword) {
         return Pattern.compile("\\b" + keyword + "\\b", Pattern.CASE_INSENSITIVE)
@@ -121,7 +121,7 @@ public class SqlValidator {
     }
 
     /**
-     * 取得第一個單字
+     * Get first word
      */
     private String getFirstWord(String query) {
         String[] words = query.trim().split("\\s+");
@@ -129,7 +129,7 @@ public class SqlValidator {
     }
 
     /**
-     * 清理查詢字串（移除多餘空白）
+     * Sanitize query string (remove extra whitespace)
      */
     public String sanitizeQuery(String query) {
         if (query == null) {
@@ -139,7 +139,7 @@ public class SqlValidator {
     }
 
     /**
-     * 檢查是否為只讀查詢
+     * Check if it is a read-only query
      */
     public boolean isReadOnlyQuery(String query) {
         if (query == null) {

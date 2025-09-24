@@ -1,7 +1,7 @@
 package com.mcp.common.exception;
 
 /**
- * 查詢執行相關例外
+ * Query execution-related exceptions
  */
 public class QueryException extends McpException {
 
@@ -14,7 +14,7 @@ public class QueryException extends McpException {
     }
 
     /**
-     * SQL 語法錯誤
+     * SQL syntax error
      */
     public static class SqlSyntaxError extends QueryException {
         public SqlSyntaxError(String message, Throwable cause) {
@@ -23,7 +23,7 @@ public class QueryException extends McpException {
     }
 
     /**
-     * 查詢超時例外
+     * Query timeout exception
      */
     public static class QueryTimeout extends QueryException {
         public QueryTimeout(int timeoutSeconds) {
@@ -32,7 +32,7 @@ public class QueryException extends McpException {
     }
 
     /**
-     * 不允許的操作例外
+     * Operation not allowed exception
      */
     public static class OperationNotAllowed extends QueryException {
         public OperationNotAllowed(String operation) {
@@ -41,7 +41,7 @@ public class QueryException extends McpException {
     }
 
     /**
-     * SQL 注入檢測例外
+     * SQL injection detection exception
      */
     public static class SqlInjectionDetected extends QueryException {
         public SqlInjectionDetected(String reason) {

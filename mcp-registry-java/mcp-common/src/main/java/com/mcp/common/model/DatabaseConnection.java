@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 資料庫連線模型
+ * Database connection model
  *
- * 表示一個資料庫連線的完整資訊
+ * Represents complete information about a database connection
  */
 public class DatabaseConnection {
 

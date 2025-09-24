@@ -4,14 +4,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 資料庫連線識別碼值對象
+ * Database connection identifier value object
  */
 public class ConnectionId {
     private final String value;
 
     private ConnectionId(String value) {
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("ConnectionId 不能為空");
+            throw new IllegalArgumentException("ConnectionId cannot be empty");
         }
         this.value = value.trim();
     }

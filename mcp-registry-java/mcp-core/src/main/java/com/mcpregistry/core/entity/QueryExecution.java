@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 查詢執行聚合根
- * 管理單次查詢執行的生命週期和結果
+ * Query execution aggregate root
+ * Manages the lifecycle and results of a single query execution
  */
 public class QueryExecution {
 
@@ -25,8 +25,8 @@ public class QueryExecution {
 
     public QueryExecution(ConnectionId connectionId, String query, List<Object> parameters) {
         this.id = QueryId.generate();
-        this.connectionId = Objects.requireNonNull(connectionId, "ConnectionId 不能為空");
-        this.query = Objects.requireNonNull(query, "查詢語句不能為空");
+        this.connectionId = Objects.requireNonNull(connectionId, "ConnectionId cannot be null");
+        this.query = Objects.requireNonNull(query, "Query cannot be null");
         this.parameters = parameters != null ? List.copyOf(parameters) : List.of();
         this.queryType = determineQueryType(query);
         this.status = QueryStatus.PENDING;
@@ -34,21 +34,21 @@ public class QueryExecution {
     }
 
     /**
-     * 標記查詢開始執行
+     * Mark query as started
      */
     public void markStarted() {
         if (this.status != QueryStatus.PENDING) {
-            throw new IllegalStateException("只有待執行的查詢可以開始執行");
+            throw new IllegalStateException("Only pending queries can be started");
         }
         this.status = QueryStatus.EXECUTING;
     }
 
     /**
-     * 標記查詢執行成功
+     * Mark query execution as successful
      */
     public void markCompleted(Object result) {
         if (this.status != QueryStatus.EXECUTING) {
-            throw new IllegalStateException("只有執行中的查詢可以標記為完成");
+            throw new IllegalStateException("Only executing queries can be marked as completed");
         }
         this.status = QueryStatus.COMPLETED;
         this.result = result;
@@ -57,24 +57,24 @@ public class QueryExecution {
     }
 
     /**
-     * 標記查詢執行失敗
+     * Mark query execution as failed
      */
     public void markFailed(String errorMessage) {
         if (this.status != QueryStatus.EXECUTING) {
-            throw new IllegalStateException("只有執行中的查詢可以標記為失敗");
+            throw new IllegalStateException("Only executing queries can be marked as failed");
         }
         this.status = QueryStatus.FAILED;
-        this.errorMessage = Objects.requireNonNull(errorMessage, "錯誤訊息不能為空");
+        this.errorMessage = Objects.requireNonNull(errorMessage, "Error message cannot be null");
         this.completedAt = LocalDateTime.now();
         this.executionTimeMs = calculateExecutionTime();
     }
 
     /**
-     * 取消查詢執行
+     * Cancel query execution
      */
     public void cancel() {
         if (this.status == QueryStatus.COMPLETED || this.status == QueryStatus.FAILED) {
-            throw new IllegalStateException("已完成或已失敗的查詢無法取消");
+            throw new IllegalStateException("Completed or failed queries cannot be cancelled");
         }
         this.status = QueryStatus.CANCELLED;
         this.completedAt = LocalDateTime.now();
@@ -106,21 +106,21 @@ public class QueryExecution {
     }
 
     /**
-     * 檢查查詢是否已完成（成功或失敗）
+     * Check if query is completed (successful or failed)
      */
     public boolean isCompleted() {
         return status == QueryStatus.COMPLETED || status == QueryStatus.FAILED || status == QueryStatus.CANCELLED;
     }
 
     /**
-     * 檢查查詢是否成功
+     * Check if query is successful
      */
     public boolean isSuccessful() {
         return status == QueryStatus.COMPLETED;
     }
 
     /**
-     * 獲取安全的查詢摘要（截斷長查詢）
+     * Get safe query summary (truncate long queries)
      */
     public String getQuerySummary() {
         return query.length() > 100 ? query.substring(0, 100) + "..." : query;
