@@ -30,9 +30,10 @@
         <mysql.version>8.3.0</mysql.version>
 
         <!-- Testing related versions -->
-        <junit.version>5.10.1</junit.version>
+        <junit.version>5.10.2</junit.version>
         <testcontainers.version>1.19.3</testcontainers.version>
-        <mockito.version>5.8.0</mockito.version>
+        <mockito.version>5.11.0</mockito.version>
+        <ezspec.version>2.0.2</ezspec.version>
 
         <!-- Utility library versions -->
         <lombok.version>1.18.30</lombok.version>
@@ -137,6 +138,14 @@
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
                 <version>${mapstruct.version}</version>
+            </dependency>
+
+            <!-- ezSpec Testing Framework -->
+            <dependency>
+                <groupId>tw.teddysoft</groupId>
+                <artifactId>ezspec</artifactId>
+                <version>${ezspec.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <!-- Internal module dependencies -->

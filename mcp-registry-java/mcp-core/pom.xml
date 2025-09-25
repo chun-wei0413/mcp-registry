@@ -15,6 +15,11 @@
     <name>MCP Core</name>
     <description>Clean Architecture + DDD core implementation</description>
 
+    <properties>
+        <!-- ezSpec version -->
+        <ezspec.version>2.0.3</ezspec.version>
+    </properties>
+
     <dependencies>
         <!-- 內部依賴 -->
         <dependency>
@@ -51,6 +56,21 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ezSpec Testing Framework -->
+        <dependency>
+            <groupId>tw.teddysoft.ezspec</groupId>
+            <artifactId>ezspec-core</artifactId>
+            <version>${ezspec.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>tw.teddysoft.ezspec</groupId>
+            <artifactId>ezspec-report</artifactId>
+            <version>${ezspec.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
