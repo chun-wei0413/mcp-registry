@@ -1,0 +1,591 @@
+package com.mcpregistry.integration;
+
+// Import statements for database connection services
+import com.mcpregistry.core.entity.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * 跨資料庫遷移 BDD 測試
+ *
+ * 功能：作為資料工程師，我希望能夠在 PostgreSQL 和 MySQL 之間進行資料遷移
+ * 以便我可以實現系統遷移、資料備份、資料同步等業務需求
+ */
+@ExtendWith(MockitoExtension.class)
+@Testcontainers
+@DisplayName("跨資料庫遷移")
+class CrossDatabaseMigrationBDDTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("source_system")
+            .withUsername("data_engineer")
+            .withPassword("secure_pass");
+
+    @Container
+    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+            .withDatabaseName("target_system")
+            .withUsername("migration_user")
+            .withPassword("migration_pass");
+
+    private com.mcp.postgresql.service.DatabaseConnectionService postgresService;
+    private com.mcp.mysql.service.DatabaseConnectionService mysqlService;
+    private String sourceConnectionId;
+    private String targetConnectionId;
+
+    @BeforeEach
+    void setUp(TestInfo testInfo) throws Exception {
+        postgresService = new com.mcp.postgresql.service.DatabaseConnectionService();
+        mysqlService = new com.mcp.mysql.service.DatabaseConnectionService();
+
+        sourceConnectionId = "postgres-source-system";
+        targetConnectionId = "mysql-target-system";
+
+        setupDatabaseConnections();
+        setupTestScenarioData(testInfo);
+    }
+
+    private void setupDatabaseConnections() {
+        // 設置 PostgreSQL 來源連線
+        ConnectionConfig postgresConfig = ConnectionConfig.builder()
+                .connectionId(sourceConnectionId)
+                .host(postgres.getHost())
+                .port(postgres.getFirstMappedPort())
+                .database(postgres.getDatabaseName())
+                .username(postgres.getUsername())
+                .password(postgres.getPassword())
+                .maxPoolSize(5)
+                .build();
+
+        // 設置 MySQL 目標連線
+        ConnectionConfig mysqlConfig = ConnectionConfig.builder()
+                .connectionId(targetConnectionId)
+                .host(mysql.getHost())
+                .port(mysql.getFirstMappedPort())
+                .database(mysql.getDatabaseName())
+                .username(mysql.getUsername())
+                .password(mysql.getPassword())
+                .maxPoolSize(5)
+                .build();
+
+        boolean pgAdded = postgresService.addConnection(postgresConfig);
+        boolean mysqlAdded = mysqlService.addConnection(mysqlConfig);
+
+        assertTrue(pgAdded, "PostgreSQL 來源連線應該成功建立");
+        assertTrue(mysqlAdded, "MySQL 目標連線應該成功建立");
+    }
+
+    private void setupTestScenarioData(TestInfo testInfo) throws Exception {
+        setupPostgreSQLSourceData();
+        setupMySQLTargetSchema();
+    }
+
+    private void setupPostgreSQLSourceData() throws Exception {
+        String jdbcUrl = postgres.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, postgres.getUsername(), postgres.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            // 建立來源系統的業務表格
+            stmt.execute("""
+                CREATE TABLE customer_accounts (
+                    account_id SERIAL PRIMARY KEY,
+                    customer_name VARCHAR(255) NOT NULL,
+                    email_address VARCHAR(255) UNIQUE,
+                    phone_number VARCHAR(50),
+                    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    account_status VARCHAR(20) DEFAULT 'active',
+                    credit_limit DECIMAL(12,2) DEFAULT 0.00
+                )
+                """);
+
+            stmt.execute("""
+                CREATE TABLE purchase_orders (
+                    order_id SERIAL PRIMARY KEY,
+                    account_id INTEGER REFERENCES customer_accounts(account_id),
+                    order_reference VARCHAR(100) UNIQUE NOT NULL,
+                    order_total DECIMAL(12,2) NOT NULL,
+                    order_status VARCHAR(30) DEFAULT 'pending',
+                    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    notes TEXT
+                )
+                """);
+
+            // 插入業務測試資料
+            stmt.execute("""
+                INSERT INTO customer_accounts (customer_name, email_address, phone_number, account_status, credit_limit) VALUES
+                ('企業客戶 A', 'enterprise.a@business.com', '+886-2-1234-5678', 'active', 100000.00),
+                ('企業客戶 B', 'enterprise.b@business.com', '+886-2-2345-6789', 'active', 75000.00),
+                ('個人客戶 C', 'personal.c@email.com', '+886-9-3456-7890', 'active', 50000.00),
+                ('個人客戶 D', 'personal.d@email.com', '+886-9-4567-8901', 'suspended', 25000.00)
+                """);
+
+            stmt.execute("""
+                INSERT INTO purchase_orders (account_id, order_reference, order_total, order_status, notes) VALUES
+                (1, 'ENT-2024-0001', 45000.00, 'completed', '大型企業採購訂單'),
+                (1, 'ENT-2024-0002', 32000.00, 'processing', '追加設備訂單'),
+                (2, 'ENT-2024-0003', 28000.00, 'completed', '季度補貨訂單'),
+                (3, 'PER-2024-0001', 15000.00, 'completed', '個人消費訂單'),
+                (4, 'PER-2024-0002', 8000.00, 'cancelled', '客戶取消訂單')
+                """);
+        }
+    }
+
+    private void setupMySQLTargetSchema() throws Exception {
+        String jdbcUrl = mysql.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, mysql.getUsername(), mysql.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            // 建立目標系統的對應表格（結構稍有調整）
+            stmt.execute("""
+                CREATE TABLE migrated_customers (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    full_name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) UNIQUE,
+                    contact_phone VARCHAR(50),
+                    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    status ENUM('active', 'suspended', 'archived') DEFAULT 'active',
+                    credit_amount DECIMAL(12,2) DEFAULT 0.00,
+                    source_account_id INT,
+                    migration_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_source_id (source_account_id),
+                    INDEX idx_email (email),
+                    INDEX idx_status (status)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            stmt.execute("""
+                CREATE TABLE migrated_orders (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_id INT,
+                    reference_number VARCHAR(100) UNIQUE NOT NULL,
+                    total_amount DECIMAL(12,2) NOT NULL,
+                    current_status ENUM('pending', 'processing', 'completed', 'cancelled') DEFAULT 'pending',
+                    order_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    description TEXT,
+                    source_order_id INT,
+                    migration_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (customer_id) REFERENCES migrated_customers(id),
+                    INDEX idx_customer_id (customer_id),
+                    INDEX idx_reference (reference_number),
+                    INDEX idx_status (current_status),
+                    INDEX idx_source_order (source_order_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            // 建立遷移追蹤表
+            stmt.execute("""
+                CREATE TABLE migration_tracking (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    migration_session VARCHAR(100) NOT NULL,
+                    source_system VARCHAR(50) NOT NULL,
+                    target_system VARCHAR(50) NOT NULL,
+                    table_name VARCHAR(100) NOT NULL,
+                    records_source INT DEFAULT 0,
+                    records_migrated INT DEFAULT 0,
+                    records_failed INT DEFAULT 0,
+                    start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    end_time DATETIME NULL,
+                    status ENUM('started', 'in_progress', 'completed', 'failed') DEFAULT 'started',
+                    error_details TEXT,
+                    INDEX idx_session (migration_session),
+                    INDEX idx_status (status)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+        }
+    }
+
+    @Nested
+    @DisplayName("連線驗證")
+    class ConnectionVerification {
+
+        @Test
+        @DisplayName("場景：驗證來源和目標資料庫連線")
+        void shouldVerifyBothDatabaseConnections() {
+            // Given: PostgreSQL 和 MySQL 容器都已啟動
+            // When: 測試兩個資料庫的連線狀態
+            boolean postgresConnected = postgresService.testConnection(sourceConnectionId);
+            boolean mysqlConnected = mysqlService.testConnection(targetConnectionId);
+
+            // Then: 兩個資料庫都應該可以正常連線
+            assertTrue(postgresConnected, "PostgreSQL 來源資料庫應該可以連線");
+            assertTrue(mysqlConnected, "MySQL 目標資料庫應該可以連線");
+        }
+    }
+
+    @Nested
+    @DisplayName("客戶資料遷移")
+    class CustomerDataMigration {
+
+        @Test
+        @DisplayName("場景：完整遷移客戶帳戶資料")
+        void shouldMigrateAllCustomerAccountsCompletely() {
+            // Given: PostgreSQL 中存在客戶帳戶資料
+            QueryResult sourceCustomers = postgresService.executeQuery(
+                sourceConnectionId,
+                "SELECT account_id, customer_name, email_address, phone_number, account_status, credit_limit FROM customer_accounts ORDER BY account_id",
+                List.of()
+            );
+
+            assertTrue(sourceCustomers.getRowCount() >= 4, "來源應該有至少 4 筆客戶資料");
+
+            // When: 執行客戶資料遷移
+            String migrationSession = "CUSTOMER_MIGRATION_" + System.currentTimeMillis();
+
+            // 記錄遷移開始
+            mysqlService.executeQuery(targetConnectionId, """
+                INSERT INTO migration_tracking (migration_session, source_system, target_system, table_name, records_source, status)
+                VALUES (?, 'PostgreSQL', 'MySQL', 'customer_accounts', ?, 'started')
+                """, List.of(migrationSession, sourceCustomers.getRowCount()));
+
+            int migratedCount = 0;
+            for (Map<String, Object> customer : sourceCustomers.getRows()) {
+                try {
+                    QueryResult insertResult = mysqlService.executeQuery(targetConnectionId, """
+                        INSERT INTO migrated_customers (full_name, email, contact_phone, status, credit_amount, source_account_id)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """, List.of(
+                            customer.get("customer_name"),
+                            customer.get("email_address"),
+                            customer.get("phone_number"),
+                            customer.get("account_status"),
+                            customer.get("credit_limit"),
+                            customer.get("account_id")
+                        ));
+
+                    if (insertResult.getAffectedRows() > 0) {
+                        migratedCount++;
+                    }
+                } catch (Exception e) {
+                    // 記錄遷移失敗
+                    System.err.printf("客戶遷移失敗: %s - %s%n", customer.get("customer_name"), e.getMessage());
+                }
+            }
+
+            // 更新遷移記錄
+            mysqlService.executeQuery(targetConnectionId, """
+                UPDATE migration_tracking
+                SET records_migrated = ?, end_time = NOW(), status = 'completed'
+                WHERE migration_session = ?
+                """, List.of(migratedCount, migrationSession));
+
+            // Then: 所有客戶資料都應該成功遷移
+            assertEquals(sourceCustomers.getRowCount(), migratedCount, "所有客戶資料都應該成功遷移");
+
+            // And: 驗證目標資料庫中的資料
+            QueryResult targetCustomers = mysqlService.executeQuery(targetConnectionId,
+                "SELECT COUNT(*) as count FROM migrated_customers", List.of());
+
+            assertEquals(migratedCount,
+                ((Number) targetCustomers.getRows().get(0).get("count")).intValue(),
+                "目標資料庫應該包含所有遷移的客戶資料");
+        }
+
+        @Test
+        @DisplayName("場景：遷移特定狀態的客戶")
+        void shouldMigrateActiveCustomersOnly() {
+            // Given: 只需要遷移活躍狀態的客戶
+            QueryResult activeCustomers = postgresService.executeQuery(
+                sourceConnectionId,
+                "SELECT * FROM customer_accounts WHERE account_status = 'active'",
+                List.of()
+            );
+
+            assertTrue(activeCustomers.getRowCount() >= 3, "應該有至少 3 個活躍客戶");
+
+            // When: 只遷移活躍客戶
+            for (Map<String, Object> customer : activeCustomers.getRows()) {
+                mysqlService.executeQuery(targetConnectionId, """
+                    INSERT INTO migrated_customers (full_name, email, contact_phone, status, credit_amount, source_account_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """, List.of(
+                        customer.get("customer_name"),
+                        customer.get("email_address"),
+                        customer.get("phone_number"),
+                        "active",  // 確保遷移為活躍狀態
+                        customer.get("credit_limit"),
+                        customer.get("account_id")
+                    ));
+            }
+
+            // Then: 目標資料庫應該只包含活躍客戶
+            QueryResult migratedActiveCustomers = mysqlService.executeQuery(targetConnectionId,
+                "SELECT COUNT(*) as count FROM migrated_customers WHERE status = 'active'",
+                List.of());
+
+            assertEquals(activeCustomers.getRowCount(),
+                ((Number) migratedActiveCustomers.getRows().get(0).get("count")).intValue(),
+                "目標資料庫應該只包含活躍客戶");
+        }
+    }
+
+    @Nested
+    @DisplayName("訂單資料遷移")
+    class OrderDataMigration {
+
+        @Test
+        @DisplayName("場景：遷移訂單並建立客戶關聯")
+        void shouldMigrateOrdersWithCustomerMapping() {
+            // Given: 先完成客戶遷移以建立 ID 映射
+            shouldMigrateAllCustomerAccountsCompletely();
+
+            // And: 建立客戶 ID 映射關係
+            QueryResult customerMapping = mysqlService.executeQuery(targetConnectionId,
+                "SELECT id, source_account_id FROM migrated_customers ORDER BY source_account_id",
+                List.of());
+
+            Map<Integer, Integer> idMapping = customerMapping.getRows().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                    row -> ((Number) row.get("source_account_id")).intValue(),
+                    row -> ((Number) row.get("id")).intValue()
+                ));
+
+            // And: 獲取來源訂單資料
+            QueryResult sourceOrders = postgresService.executeQuery(sourceConnectionId,
+                "SELECT * FROM purchase_orders ORDER BY order_id", List.of());
+
+            // When: 遷移訂單資料並映射客戶關係
+            int migratedOrderCount = 0;
+            for (Map<String, Object> order : sourceOrders.getRows()) {
+                Integer sourceAccountId = ((Number) order.get("account_id")).intValue();
+                Integer targetCustomerId = idMapping.get(sourceAccountId);
+
+                assertNotNull(targetCustomerId,
+                    String.format("應該能找到客戶 ID %d 的映射關係", sourceAccountId));
+
+                QueryResult insertResult = mysqlService.executeQuery(targetConnectionId, """
+                    INSERT INTO migrated_orders (customer_id, reference_number, total_amount, current_status, description, source_order_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """, List.of(
+                        targetCustomerId,
+                        order.get("order_reference"),
+                        order.get("order_total"),
+                        order.get("order_status"),
+                        order.get("notes"),
+                        order.get("order_id")
+                    ));
+
+                if (insertResult.getAffectedRows() > 0) {
+                    migratedOrderCount++;
+                }
+            }
+
+            // Then: 所有訂單都應該成功遷移
+            assertEquals(sourceOrders.getRowCount(), migratedOrderCount, "所有訂單都應該成功遷移");
+
+            // And: 驗證關聯關係正確性
+            QueryResult orderCustomerJoin = mysqlService.executeQuery(targetConnectionId, """
+                SELECT
+                    o.reference_number,
+                    c.full_name,
+                    o.total_amount
+                FROM migrated_orders o
+                INNER JOIN migrated_customers c ON o.customer_id = c.id
+                ORDER BY o.reference_number
+                """, List.of());
+
+            assertEquals(migratedOrderCount, orderCustomerJoin.getRowCount(),
+                "所有訂單都應該能正確關聯到客戶");
+        }
+    }
+
+    @Nested
+    @DisplayName("事務性遷移")
+    class TransactionalMigration {
+
+        @Test
+        @DisplayName("場景：使用事務確保資料一致性")
+        void shouldPerformTransactionalMigration() {
+            // Given: 需要在事務中執行相關聯的資料遷移
+            QueryResult firstCustomer = postgresService.executeQuery(sourceConnectionId,
+                "SELECT * FROM customer_accounts LIMIT 1", List.of());
+
+            Map<String, Object> customer = firstCustomer.getRows().get(0);
+
+            // When: 在單一事務中遷移客戶和相關訂單
+            List<QueryRequest> migrationQueries = List.of(
+                QueryRequest.builder()
+                    .query("""
+                        INSERT INTO migrated_customers (full_name, email, contact_phone, status, credit_amount, source_account_id)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """)
+                    .params(List.of(
+                        customer.get("customer_name"),
+                        customer.get("email_address"),
+                        customer.get("phone_number"),
+                        customer.get("account_status"),
+                        customer.get("credit_limit"),
+                        customer.get("account_id")
+                    ))
+                    .build(),
+                QueryRequest.builder()
+                    .query("INSERT INTO migration_tracking (migration_session, source_system, target_system, table_name, records_migrated, status) VALUES (?, ?, ?, ?, ?, ?)")
+                    .params(List.of("TXN_TEST", "PostgreSQL", "MySQL", "customer_accounts", 1, "completed"))
+                    .build()
+            );
+
+            QueryResult transactionResult = mysqlService.executeTransaction(targetConnectionId, migrationQueries);
+
+            // Then: 事務應該成功完成
+            assertTrue(transactionResult.isTransactionSuccessful(), "事務性遷移應該成功");
+
+            // And: 所有相關資料都應該存在
+            QueryResult verifyCustomer = mysqlService.executeQuery(targetConnectionId,
+                "SELECT COUNT(*) as count FROM migrated_customers WHERE source_account_id = ?",
+                List.of(customer.get("account_id")));
+
+            assertEquals(1, ((Number) verifyCustomer.getRows().get(0).get("count")).intValue(),
+                "客戶資料應該成功插入");
+
+            QueryResult verifyTracking = mysqlService.executeQuery(targetConnectionId,
+                "SELECT COUNT(*) as count FROM migration_tracking WHERE migration_session = 'TXN_TEST'",
+                List.of());
+
+            assertEquals(1, ((Number) verifyTracking.getRows().get(0).get("count")).intValue(),
+                "遷移追蹤記錄應該成功插入");
+        }
+
+        @Test
+        @DisplayName("場景：遷移失敗時自動回滾")
+        void shouldRollbackOnMigrationFailure() {
+            // Given: 準備會導致失敗的遷移操作
+            List<QueryRequest> failingMigrationQueries = List.of(
+                QueryRequest.builder()
+                    .query("INSERT INTO migrated_customers (full_name, email, source_account_id) VALUES (?, ?, ?)")
+                    .params(List.of("測試客戶", "test@example.com", 999))
+                    .build(),
+                QueryRequest.builder()
+                    .query("INSERT INTO migrated_customers (full_name, email, source_account_id) VALUES (?, ?, ?)")
+                    .params(List.of("重複客戶", "test@example.com", 1000))  // 重複 email 會失敗
+                    .build()
+            );
+
+            // When: 執行會失敗的事務
+            assertThrows(RuntimeException.class, () -> {
+                mysqlService.executeTransaction(targetConnectionId, failingMigrationQueries);
+            }, "事務應該因為重複 email 而失敗");
+
+            // Then: 第一個插入應該被回滾
+            QueryResult checkRollback = mysqlService.executeQuery(targetConnectionId,
+                "SELECT COUNT(*) as count FROM migrated_customers WHERE email = 'test@example.com'",
+                List.of());
+
+            assertEquals(0, ((Number) checkRollback.getRows().get(0).get("count")).intValue(),
+                "失敗的事務應該完全回滾，不應該有任何資料殘留");
+        }
+    }
+
+    @Nested
+    @DisplayName("資料驗證")
+    class DataValidation {
+
+        @Test
+        @DisplayName("場景：驗證遷移後的資料完整性")
+        void shouldValidateDataIntegrityAfterMigration() {
+            // Given: 完成完整的資料遷移
+            shouldMigrateAllCustomerAccountsCompletely();
+
+            // When: 比較來源和目標的資料統計
+            QueryResult sourceStats = postgresService.executeQuery(sourceConnectionId, """
+                SELECT
+                    COUNT(*) as total_customers,
+                    COUNT(CASE WHEN account_status = 'active' THEN 1 END) as active_customers,
+                    SUM(credit_limit) as total_credit
+                FROM customer_accounts
+                """, List.of());
+
+            QueryResult targetStats = mysqlService.executeQuery(targetConnectionId, """
+                SELECT
+                    COUNT(*) as total_customers,
+                    COUNT(CASE WHEN status = 'active' THEN 1 END) as active_customers,
+                    SUM(credit_amount) as total_credit
+                FROM migrated_customers
+                """, List.of());
+
+            // Then: 統計數據應該一致
+            Map<String, Object> sourceData = sourceStats.getRows().get(0);
+            Map<String, Object> targetData = targetStats.getRows().get(0);
+
+            assertEquals(
+                ((Number) sourceData.get("total_customers")).intValue(),
+                ((Number) targetData.get("total_customers")).intValue(),
+                "客戶總數應該一致"
+            );
+
+            assertEquals(
+                ((Number) sourceData.get("active_customers")).intValue(),
+                ((Number) targetData.get("active_customers")).intValue(),
+                "活躍客戶數應該一致"
+            );
+
+            // And: 檢查特定客戶資料的正確性
+            QueryResult sourceCustomer = postgresService.executeQuery(sourceConnectionId,
+                "SELECT customer_name, email_address FROM customer_accounts WHERE account_id = 1", List.of());
+
+            QueryResult targetCustomer = mysqlService.executeQuery(targetConnectionId,
+                "SELECT full_name, email FROM migrated_customers WHERE source_account_id = 1", List.of());
+
+            assertEquals(1, sourceCustomer.getRowCount(), "來源應該有一筆資料");
+            assertEquals(1, targetCustomer.getRowCount(), "目標應該有對應的一筆資料");
+
+            assertEquals(
+                sourceCustomer.getRows().get(0).get("customer_name"),
+                targetCustomer.getRows().get(0).get("full_name"),
+                "客戶姓名應該正確遷移"
+            );
+        }
+
+        @Test
+        @DisplayName("場景：檢查遷移過程的追蹤記錄")
+        void shouldTrackMigrationProgress() {
+            // Given: 執行帶追蹤的遷移
+            String sessionId = "VALIDATION_TEST_" + System.currentTimeMillis();
+
+            mysqlService.executeQuery(targetConnectionId, """
+                INSERT INTO migration_tracking (migration_session, source_system, target_system, table_name, records_source, records_migrated, status)
+                VALUES (?, 'PostgreSQL', 'MySQL', 'customer_accounts', 4, 4, 'completed')
+                """, List.of(sessionId));
+
+            // When: 查詢遷移追蹤記錄
+            QueryResult trackingRecords = mysqlService.executeQuery(targetConnectionId, """
+                SELECT
+                    migration_session,
+                    source_system,
+                    target_system,
+                    table_name,
+                    records_source,
+                    records_migrated,
+                    status,
+                    TIMESTAMPDIFF(SECOND, start_time, COALESCE(end_time, NOW())) as duration_seconds
+                FROM migration_tracking
+                WHERE migration_session = ?
+                """, List.of(sessionId));
+
+            // Then: 追蹤記錄應該正確記錄遷移資訊
+            assertEquals(1, trackingRecords.getRowCount(), "應該有一筆追蹤記錄");
+
+            Map<String, Object> tracking = trackingRecords.getRows().get(0);
+            assertEquals("PostgreSQL", tracking.get("source_system"), "來源系統應該是 PostgreSQL");
+            assertEquals("MySQL", tracking.get("target_system"), "目標系統應該是 MySQL");
+            assertEquals("completed", tracking.get("status"), "狀態應該是已完成");
+            assertEquals(4, ((Number) tracking.get("records_source")).intValue(), "來源記錄數應該正確");
+            assertEquals(4, ((Number) tracking.get("records_migrated")).intValue(), "遷移記錄數應該正確");
+        }
+    }
+}

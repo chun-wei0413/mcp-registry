@@ -1,0 +1,565 @@
+package com.mcpregistry.performance;
+
+// Import statements for database connection services
+import com.mcpregistry.core.entity.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * 資料庫性能 BDD 測試
+ *
+ * 功能：作為系統管理員，我希望了解 PostgreSQL 和 MySQL MCP Server 的性能特性
+ * 以便我可以在不同負載情況下做出合適的系統配置和資源規劃決策
+ */
+@ExtendWith(MockitoExtension.class)
+@Testcontainers
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisplayName("資料庫性能驗證")
+class DatabasePerformanceBDDTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("performance_test")
+            .withUsername("perf_user")
+            .withPassword("perf_pass")
+            .withSharedMemory("256m");
+
+    @Container
+    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+            .withDatabaseName("performance_test")
+            .withUsername("perf_user")
+            .withPassword("perf_pass");
+
+    private com.mcp.postgresql.service.DatabaseConnectionService postgresService;
+    private com.mcp.mysql.service.DatabaseConnectionService mysqlService;
+    private String postgresConnectionId;
+    private String mysqlConnectionId;
+
+    @BeforeAll
+    static void beforeAll() {
+        System.setProperty("test.performance.enabled", "true");
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        postgresService = new com.mcp.postgresql.service.DatabaseConnectionService();
+        mysqlService = new com.mcp.mysql.service.DatabaseConnectionService();
+
+        postgresConnectionId = "perf-postgres";
+        mysqlConnectionId = "perf-mysql";
+
+        setupDatabaseConnections();
+        setupPerformanceTestData();
+    }
+
+    private void setupDatabaseConnections() {
+        // 設置高性能連線配置
+        ConnectionConfig postgresConfig = ConnectionConfig.builder()
+                .connectionId(postgresConnectionId)
+                .host(postgres.getHost())
+                .port(postgres.getFirstMappedPort())
+                .database(postgres.getDatabaseName())
+                .username(postgres.getUsername())
+                .password(postgres.getPassword())
+                .maxPoolSize(20)
+                .build();
+
+        ConnectionConfig mysqlConfig = ConnectionConfig.builder()
+                .connectionId(mysqlConnectionId)
+                .host(mysql.getHost())
+                .port(mysql.getFirstMappedPort())
+                .database(mysql.getDatabaseName())
+                .username(mysql.getUsername())
+                .password(mysql.getPassword())
+                .maxPoolSize(20)
+                .build();
+
+        boolean pgAdded = postgresService.addConnection(postgresConfig);
+        boolean mysqlAdded = mysqlService.addConnection(mysqlConfig);
+
+        assertTrue(pgAdded, "PostgreSQL 高性能連線應該成功建立");
+        assertTrue(mysqlAdded, "MySQL 高性能連線應該成功建立");
+    }
+
+    private void setupPerformanceTestData() throws Exception {
+        setupPostgreSQLTestData();
+        setupMySQLTestData();
+    }
+
+    private void setupPostgreSQLTestData() throws Exception {
+        String jdbcUrl = postgres.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, postgres.getUsername(), postgres.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute("""
+                CREATE TABLE performance_users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    score DECIMAL(10,2),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """);
+
+            stmt.execute("""
+                CREATE TABLE performance_transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES performance_users(id),
+                    amount DECIMAL(12,2) NOT NULL,
+                    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """);
+
+            // 插入性能測試資料
+            for (int batch = 0; batch < 5; batch++) {
+                StringBuilder userQuery = new StringBuilder("INSERT INTO performance_users (username, email, score) VALUES ");
+                for (int i = 0; i < 1000; i++) {
+                    int userId = batch * 1000 + i + 1;
+                    if (i > 0) userQuery.append(", ");
+                    userQuery.append(String.format("('user%d', 'user%d@test.com', %.2f)", userId, userId, Math.random() * 1000));
+                }
+                stmt.execute(userQuery.toString());
+            }
+
+            stmt.execute("CREATE INDEX idx_perf_users_email ON performance_users(email)");
+            stmt.execute("CREATE INDEX idx_perf_users_score ON performance_users(score)");
+            stmt.execute("CREATE INDEX idx_perf_transactions_user_id ON performance_transactions(user_id)");
+            stmt.execute("ANALYZE performance_users");
+        }
+    }
+
+    private void setupMySQLTestData() throws Exception {
+        String jdbcUrl = mysql.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, mysql.getUsername(), mysql.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute("""
+                CREATE TABLE performance_customers (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_code VARCHAR(50) NOT NULL UNIQUE,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    credit_score DECIMAL(10,2),
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_customer_code (customer_code),
+                    INDEX idx_email (email),
+                    INDEX idx_credit_score (credit_score)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            stmt.execute("""
+                CREATE TABLE performance_orders (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_id INT NOT NULL,
+                    amount DECIMAL(12,2) NOT NULL,
+                    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (customer_id) REFERENCES performance_customers(id),
+                    INDEX idx_customer_id (customer_id),
+                    INDEX idx_amount (amount)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            // 插入性能測試資料
+            for (int batch = 0; batch < 5; batch++) {
+                StringBuilder customerQuery = new StringBuilder(
+                    "INSERT INTO performance_customers (customer_code, email, credit_score) VALUES ");
+                for (int i = 0; i < 1000; i++) {
+                    int customerId = batch * 1000 + i + 1;
+                    if (i > 0) customerQuery.append(", ");
+                    customerQuery.append(String.format(
+                        "('CUST%06d', 'customer%d@test.com', %.2f)",
+                        customerId, customerId, 300 + (Math.random() * 500)
+                    ));
+                }
+                stmt.execute(customerQuery.toString());
+            }
+
+            stmt.execute("ANALYZE TABLE performance_customers");
+        }
+    }
+
+    @Nested
+    @DisplayName("基本查詢性能")
+    @Order(1)
+    class BasicQueryPerformance {
+
+        @Test
+        @DisplayName("場景：比較 PostgreSQL 和 MySQL 的簡單查詢性能")
+        void shouldCompareBasicQueryPerformance() {
+            // Given: 兩個資料庫都有相同規模的測試資料
+            // When: 執行相同類型的簡單查詢並測量執行時間
+
+            // PostgreSQL 查詢性能
+            Instant pgStart = Instant.now();
+            QueryResult pgResult = postgresService.executeQuery(postgresConnectionId,
+                "SELECT COUNT(*) FROM performance_users WHERE score > 500", List.of());
+            Duration pgDuration = Duration.between(pgStart, Instant.now());
+
+            // MySQL 查詢性能
+            Instant mysqlStart = Instant.now();
+            QueryResult mysqlResult = mysqlService.executeQuery(mysqlConnectionId,
+                "SELECT COUNT(*) FROM performance_customers WHERE credit_score > 500", List.of());
+            Duration mysqlDuration = Duration.between(mysqlStart, Instant.now());
+
+            // Then: 兩個查詢都應該在合理時間內完成
+            assertTrue(pgDuration.toMillis() < 2000,
+                String.format("PostgreSQL 查詢應該在 2 秒內完成 (實際: %d ms)", pgDuration.toMillis()));
+            assertTrue(mysqlDuration.toMillis() < 2000,
+                String.format("MySQL 查詢應該在 2 秒內完成 (實際: %d ms)", mysqlDuration.toMillis()));
+
+            // And: 記錄性能比較結果
+            System.out.printf("性能比較 - PostgreSQL: %d ms, MySQL: %d ms%n",
+                pgDuration.toMillis(), mysqlDuration.toMillis());
+
+            assertNotNull(pgResult);
+            assertNotNull(mysqlResult);
+        }
+
+        @Test
+        @DisplayName("場景：驗證索引查詢的性能優勢")
+        void shouldValidateIndexedQueryPerformance() {
+            // Given: 資料庫表格已建立適當的索引
+            String indexedQuery = "SELECT * FROM performance_users WHERE email = 'user2500@test.com'";
+            String nonIndexedQuery = "SELECT * FROM performance_users WHERE username LIKE '%2500%'";
+
+            // When: 比較使用索引和未使用索引的查詢性能
+            Instant indexedStart = Instant.now();
+            QueryResult indexedResult = postgresService.executeQuery(postgresConnectionId, indexedQuery, List.of());
+            Duration indexedDuration = Duration.between(indexedStart, Instant.now());
+
+            Instant nonIndexedStart = Instant.now();
+            QueryResult nonIndexedResult = postgresService.executeQuery(postgresConnectionId, nonIndexedQuery, List.of());
+            Duration nonIndexedDuration = Duration.between(nonIndexedStart, Instant.now());
+
+            // Then: 索引查詢應該明顯快於非索引查詢
+            assertTrue(indexedDuration.toMillis() < 500,
+                String.format("索引查詢應該在 500ms 內完成 (實際: %d ms)", indexedDuration.toMillis()));
+
+            System.out.printf("索引查詢性能比較 - 索引查詢: %d ms, 非索引查詢: %d ms%n",
+                indexedDuration.toMillis(), nonIndexedDuration.toMillis());
+
+            assertNotNull(indexedResult);
+            assertNotNull(nonIndexedResult);
+        }
+    }
+
+    @Nested
+    @DisplayName("批次操作性能")
+    @Order(2)
+    class BatchOperationPerformance {
+
+        @Test
+        @DisplayName("場景：測試不同批次大小的插入性能")
+        void shouldTestBatchInsertPerformance() {
+            // Given: 準備不同大小的批次資料
+            int[] batchSizes = {100, 500, 1000};
+
+            for (int batchSize : batchSizes) {
+                // When: 測試 PostgreSQL 批次插入性能
+                List<List<Object>> pgBatchParams = new ArrayList<>();
+                for (int i = 0; i < batchSize; i++) {
+                    int userId = 10000 + i;
+                    pgBatchParams.add(List.of(userId, "batch" + userId + "@test.com", Math.random() * 500));
+                }
+
+                String pgInsertQuery = "INSERT INTO performance_transactions (user_id, amount) VALUES (?, ?)";
+
+                Instant pgStart = Instant.now();
+                QueryResult pgResult = postgresService.executeBatch(postgresConnectionId, pgInsertQuery, pgBatchParams);
+                Duration pgDuration = Duration.between(pgStart, Instant.now());
+
+                // And: 測試 MySQL 批次插入性能
+                List<List<Object>> mysqlBatchParams = new ArrayList<>();
+                for (int i = 0; i < batchSize; i++) {
+                    int customerId = 10000 + i;
+                    mysqlBatchParams.add(List.of(customerId, Math.random() * 1000));
+                }
+
+                String mysqlInsertQuery = "INSERT INTO performance_orders (customer_id, amount) VALUES (?, ?)";
+
+                Instant mysqlStart = Instant.now();
+                QueryResult mysqlResult = mysqlService.executeBatch(mysqlConnectionId, mysqlInsertQuery, mysqlBatchParams);
+                Duration mysqlDuration = Duration.between(mysqlStart, Instant.now());
+
+                // Then: 批次操作應該展現良好的性能
+                double pgRecordsPerSecond = (double) batchSize / (pgDuration.toMillis() / 1000.0);
+                double mysqlRecordsPerSecond = (double) batchSize / (mysqlDuration.toMillis() / 1000.0);
+
+                assertTrue(pgRecordsPerSecond > 50,
+                    String.format("PostgreSQL 批次插入應該每秒處理超過 50 筆記錄 (實際: %.2f)", pgRecordsPerSecond));
+                assertTrue(mysqlRecordsPerSecond > 50,
+                    String.format("MySQL 批次插入應該每秒處理超過 50 筆記錄 (實際: %.2f)", mysqlRecordsPerSecond));
+
+                System.out.printf("批次大小 %d - PostgreSQL: %.2f 記錄/秒, MySQL: %.2f 記錄/秒%n",
+                    batchSize, pgRecordsPerSecond, mysqlRecordsPerSecond);
+
+                assertEquals(batchSize, pgResult.getAffectedRows());
+                assertEquals(batchSize, mysqlResult.getAffectedRows());
+
+                // 清理測試資料
+                postgresService.executeQuery(postgresConnectionId,
+                    "DELETE FROM performance_transactions WHERE user_id >= 10000", List.of());
+                mysqlService.executeQuery(mysqlConnectionId,
+                    "DELETE FROM performance_orders WHERE customer_id >= 10000", List.of());
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("並發查詢性能")
+    @Order(3)
+    class ConcurrentQueryPerformance {
+
+        @Test
+        @DisplayName("場景：測試 PostgreSQL 並發查詢能力")
+        void shouldTestPostgreSQLConcurrentQueries() throws InterruptedException, ExecutionException {
+            // Given: 準備並發查詢測試環境
+            int threadCount = 8;
+            int queriesPerThread = 10;
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+            List<Future<Long>> futures = new ArrayList<>();
+
+            String concurrentQuery = "SELECT COUNT(*) FROM performance_users WHERE score BETWEEN ? AND ?";
+
+            Instant overallStart = Instant.now();
+
+            // When: 執行並發查詢
+            for (int i = 0; i < threadCount; i++) {
+                final int threadId = i;
+                Future<Long> future = executor.submit(() -> {
+                    long threadTotalTime = 0;
+                    for (int j = 0; j < queriesPerThread; j++) {
+                        double minScore = threadId * 100 + j * 10;
+                        double maxScore = minScore + 50;
+
+                        Instant queryStart = Instant.now();
+                        QueryResult result = postgresService.executeQuery(
+                            postgresConnectionId, concurrentQuery, List.of(minScore, maxScore));
+                        Duration queryDuration = Duration.between(queryStart, Instant.now());
+                        threadTotalTime += queryDuration.toMillis();
+
+                        assertNotNull(result);
+                    }
+                    return threadTotalTime;
+                });
+                futures.add(future);
+            }
+
+            // 等待所有線程完成
+            long totalExecutionTime = 0;
+            for (Future<Long> future : futures) {
+                totalExecutionTime += future.get();
+            }
+            executor.shutdown();
+
+            Duration overallDuration = Duration.between(overallStart, Instant.now());
+
+            // Then: 並發查詢應該展現良好的性能特徵
+            int totalQueries = threadCount * queriesPerThread;
+            double avgTimePerQuery = (double) totalExecutionTime / totalQueries;
+            double queriesPerSecond = (double) totalQueries / (overallDuration.toMillis() / 1000.0);
+
+            assertTrue(avgTimePerQuery < 1000,
+                String.format("平均查詢時間應該少於 1 秒 (實際: %.2f ms)", avgTimePerQuery));
+            assertTrue(queriesPerSecond > 5,
+                String.format("並發查詢吞吐量應該超過 5 QPS (實際: %.2f)", queriesPerSecond));
+
+            System.out.printf("PostgreSQL 並發測試結果:%n");
+            System.out.printf("總查詢數: %d, 平均查詢時間: %.2f ms, 吞吐量: %.2f QPS%n",
+                totalQueries, avgTimePerQuery, queriesPerSecond);
+        }
+
+        @Test
+        @DisplayName("場景：比較資料庫在高並發下的穩定性")
+        void shouldCompareDatabaseStabilityUnderLoad() throws InterruptedException, ExecutionException {
+            // Given: 準備高並發測試環境
+            int concurrentUsers = 10;
+            int operationsPerUser = 5;
+
+            // When: 對 PostgreSQL 執行高並發測試
+            CompletableFuture<Double> pgPerformance = CompletableFuture.supplyAsync(() ->
+                measureConcurrentPerformance(postgresService, postgresConnectionId,
+                    "SELECT * FROM performance_users WHERE id = ?", concurrentUsers, operationsPerUser));
+
+            // And: 對 MySQL 執行高並發測試
+            CompletableFuture<Double> mysqlPerformance = CompletableFuture.supplyAsync(() ->
+                measureConcurrentPerformance(mysqlService, mysqlConnectionId,
+                    "SELECT * FROM performance_customers WHERE id = ?", concurrentUsers, operationsPerUser));
+
+            // 等待兩個測試完成
+            Double pgThroughput = pgPerformance.get();
+            Double mysqlThroughput = mysqlPerformance.get();
+
+            // Then: 兩個資料庫都應該保持穩定的性能
+            assertTrue(pgThroughput > 10,
+                String.format("PostgreSQL 高並發吞吐量應該超過 10 QPS (實際: %.2f)", pgThroughput));
+            assertTrue(mysqlThroughput > 10,
+                String.format("MySQL 高並發吞吐量應該超過 10 QPS (實際: %.2f)", mysqlThroughput));
+
+            System.out.printf("高並發穩定性測試 - PostgreSQL: %.2f QPS, MySQL: %.2f QPS%n",
+                pgThroughput, mysqlThroughput);
+        }
+
+        private Double measureConcurrentPerformance(Object connectionService, String connectionId,
+                                                   String query, int concurrentUsers, int operationsPerUser) {
+            ExecutorService executor = Executors.newFixedThreadPool(concurrentUsers);
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            Instant start = Instant.now();
+
+            for (int i = 0; i < concurrentUsers; i++) {
+                final int userId = i + 1;
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                    for (int j = 0; j < operationsPerUser; j++) {
+                        try {
+                            if (connectionService instanceof com.mcp.postgresql.service.DatabaseConnectionService) {
+                                ((com.mcp.postgresql.service.DatabaseConnectionService) connectionService).executeQuery(
+                                    connectionId, query, List.of(userId * 100 + j + 1));
+                            } else if (connectionService instanceof com.mcp.mysql.service.DatabaseConnectionService) {
+                                ((com.mcp.mysql.service.DatabaseConnectionService) connectionService).executeQuery(
+                                    connectionId, query, List.of(userId * 100 + j + 1));
+                            }
+                        } catch (Exception e) {
+                            System.err.printf("並發查詢錯誤: %s%n", e.getMessage());
+                        }
+                    }
+                }, executor);
+                futures.add(future);
+            }
+
+            // 等待所有操作完成
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            executor.shutdown();
+
+            Duration duration = Duration.between(start, Instant.now());
+            int totalOperations = concurrentUsers * operationsPerUser;
+            return (double) totalOperations / (duration.toMillis() / 1000.0);
+        }
+    }
+
+    @Nested
+    @DisplayName("事務性能")
+    @Order(4)
+    class TransactionPerformance {
+
+        @Test
+        @DisplayName("場景：測試事務處理的性能影響")
+        void shouldMeasureTransactionPerformanceOverhead() {
+            // Given: 準備事務測試資料
+            List<QueryRequest> transactionQueries = List.of(
+                QueryRequest.builder()
+                    .query("INSERT INTO performance_transactions (user_id, amount) VALUES (?, ?)")
+                    .params(List.of(1, 100.00))
+                    .build(),
+                QueryRequest.builder()
+                    .query("INSERT INTO performance_transactions (user_id, amount) VALUES (?, ?)")
+                    .params(List.of(2, 200.00))
+                    .build(),
+                QueryRequest.builder()
+                    .query("UPDATE performance_users SET score = score + 10 WHERE id IN (1, 2)")
+                    .params(List.of())
+                    .build()
+            );
+
+            // When: 測量事務執行時間
+            Instant transactionStart = Instant.now();
+            QueryResult transactionResult = postgresService.executeTransaction(postgresConnectionId, transactionQueries);
+            Duration transactionDuration = Duration.between(transactionStart, Instant.now());
+
+            // And: 測量等效的非事務操作時間
+            Instant individualStart = Instant.now();
+            for (QueryRequest query : transactionQueries) {
+                postgresService.executeQuery(postgresConnectionId, query.getQuery(), query.getParams());
+            }
+            Duration individualDuration = Duration.between(individualStart, Instant.now());
+
+            // Then: 事務應該成功完成且性能開銷在可接受範圍內
+            assertTrue(transactionResult.isTransactionSuccessful(), "事務應該成功完成");
+            assertTrue(transactionDuration.toMillis() < 5000,
+                String.format("事務執行應該在 5 秒內完成 (實際: %d ms)", transactionDuration.toMillis()));
+
+            double overhead = ((double) transactionDuration.toMillis() / individualDuration.toMillis() - 1) * 100;
+            System.out.printf("事務性能開銷: %.2f%% (事務: %d ms, 個別: %d ms)%n",
+                overhead, transactionDuration.toMillis(), individualDuration.toMillis());
+
+            // 通常事務開銷應該在合理範圍內
+            assertTrue(overhead < 200, String.format("事務開銷應該少於 200%% (實際: %.2f%%)", overhead));
+        }
+    }
+
+    @Nested
+    @DisplayName("記憶體和資源使用")
+    @Order(5)
+    class MemoryAndResourceUsage {
+
+        @Test
+        @DisplayName("場景：監控大結果集查詢的記憶體使用")
+        void shouldMonitorMemoryUsageForLargeResultSets() {
+            // Given: 準備大結果集查詢
+            Runtime runtime = Runtime.getRuntime();
+
+            // 記錄查詢前的記憶體使用
+            runtime.gc();
+            long memoryBefore = runtime.totalMemory() - runtime.freeMemory();
+
+            // When: 執行大結果集查詢
+            Instant queryStart = Instant.now();
+            QueryResult largeResult = postgresService.executeQuery(postgresConnectionId,
+                "SELECT * FROM performance_users ORDER BY id LIMIT 2000", List.of());
+            Duration queryDuration = Duration.between(queryStart, Instant.now());
+
+            // 記錄查詢後的記憶體使用
+            long memoryAfter = runtime.totalMemory() - runtime.freeMemory();
+            long memoryUsed = memoryAfter - memoryBefore;
+
+            // Then: 查詢應該有效完成且記憶體使用合理
+            assertNotNull(largeResult);
+            assertEquals(2000, largeResult.getRowCount(), "應該返回 2000 筆記錄");
+            assertTrue(queryDuration.toMillis() < 10000,
+                String.format("大結果集查詢應該在 10 秒內完成 (實際: %d ms)", queryDuration.toMillis()));
+
+            double memoryUsedMB = memoryUsed / (1024.0 * 1024.0);
+            System.out.printf("大結果集查詢 - 執行時間: %d ms, 記憶體使用: %.2f MB%n",
+                queryDuration.toMillis(), memoryUsedMB);
+
+            // 記憶體使用應該在合理範圍內
+            assertTrue(memoryUsedMB < 100,
+                String.format("記憶體使用應該少於 100 MB (實際: %.2f MB)", memoryUsedMB));
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (postgresService != null && postgresConnectionId != null) {
+            try {
+                postgresService.removeConnection(postgresConnectionId);
+            } catch (Exception e) {
+                System.err.println("清理 PostgreSQL 連線時發生錯誤: " + e.getMessage());
+            }
+        }
+
+        if (mysqlService != null && mysqlConnectionId != null) {
+            try {
+                mysqlService.removeConnection(mysqlConnectionId);
+            } catch (Exception e) {
+                System.err.println("清理 MySQL 連線時發生錯誤: " + e.getMessage());
+            }
+        }
+    }
+}

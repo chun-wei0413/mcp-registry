@@ -1,0 +1,589 @@
+package com.mcpregistry.performance;
+
+import com.mcp.postgresql.service.DatabaseConnectionService;
+import com.mcpregistry.core.entity.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * PostgreSQL MCP Server 性能測試
+ * 測試各種場景下的性能表現
+ */
+@ExtendWith(MockitoExtension.class)
+@Testcontainers
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class PostgreSQLPerformanceTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("perftest")
+            .withUsername("perfuser")
+            .withPassword("perfpass")
+            .withSharedMemory("512m");
+
+    private DatabaseConnectionService connectionService;
+    private String connectionId;
+
+    @BeforeAll
+    static void beforeAll() {
+        // 設置測試環境變數
+        System.setProperty("test.performance.enabled", "true");
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        connectionService = new DatabaseConnectionService();
+        connectionId = "perf-postgres";
+
+        // 設置高性能連線配置
+        ConnectionConfig config = ConnectionConfig.builder()
+                .connectionId(connectionId)
+                .host(postgres.getHost())
+                .port(postgres.getFirstMappedPort())
+                .database(postgres.getDatabaseName())
+                .username(postgres.getUsername())
+                .password(postgres.getPassword())
+                .maxPoolSize(20)  // 更大的連線池
+                .build();
+
+        boolean added = connectionService.addConnection(config);
+        assertTrue(added, "PostgreSQL 高性能連線應該成功建立");
+
+        setupPerformanceTestData();
+    }
+
+    private void setupPerformanceTestData() throws Exception {
+        String jdbcUrl = postgres.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, postgres.getUsername(), postgres.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            // 建立大型測試表格
+            stmt.execute("""
+                CREATE TABLE large_users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    first_name VARCHAR(100),
+                    last_name VARCHAR(100),
+                    age INTEGER,
+                    score DECIMAL(10,2),
+                    active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """);
+
+            stmt.execute("""
+                CREATE TABLE transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES large_users(id),
+                    amount DECIMAL(12,2) NOT NULL,
+                    transaction_type VARCHAR(20) NOT NULL,
+                    description TEXT,
+                    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """);
+
+            stmt.execute("""
+                CREATE TABLE performance_log (
+                    id SERIAL PRIMARY KEY,
+                    test_name VARCHAR(100) NOT NULL,
+                    operation_type VARCHAR(50) NOT NULL,
+                    record_count INTEGER,
+                    execution_time_ms BIGINT,
+                    records_per_second DECIMAL(10,2),
+                    test_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """);
+
+            // 插入大量測試資料
+            System.out.println("正在插入性能測試資料...");
+            for (int batch = 0; batch < 10; batch++) {
+                StringBuilder insertQuery = new StringBuilder(
+                    "INSERT INTO large_users (username, email, first_name, last_name, age, score) VALUES ");
+
+                for (int i = 0; i < 1000; i++) {
+                    int userId = batch * 1000 + i + 1;
+                    if (i > 0) insertQuery.append(", ");
+                    insertQuery.append(String.format(
+                        "('user%d', 'user%d@test.com', 'First%d', 'Last%d', %d, %.2f)",
+                        userId, userId, userId, userId,
+                        20 + (userId % 50),
+                        Math.random() * 1000
+                    ));
+                }
+
+                stmt.execute(insertQuery.toString());
+
+                if (batch % 2 == 0) {
+                    System.out.printf("已插入 %d 筆用戶資料...%n", (batch + 1) * 1000);
+                }
+            }
+
+            // 插入交易資料
+            for (int batch = 0; batch < 5; batch++) {
+                StringBuilder transactionQuery = new StringBuilder(
+                    "INSERT INTO transactions (user_id, amount, transaction_type, description) VALUES ");
+
+                for (int i = 0; i < 2000; i++) {
+                    int userId = (int) (Math.random() * 10000) + 1;
+                    double amount = Math.random() * 1000;
+                    String type = (amount > 500) ? "credit" : "debit";
+
+                    if (i > 0) transactionQuery.append(", ");
+                    transactionQuery.append(String.format(
+                        "(%d, %.2f, '%s', 'Performance test transaction %d')",
+                        userId, amount, type, batch * 2000 + i + 1
+                    ));
+                }
+
+                stmt.execute(transactionQuery.toString());
+            }
+
+            // 建立性能優化索引
+            stmt.execute("CREATE INDEX idx_large_users_email ON large_users(email)");
+            stmt.execute("CREATE INDEX idx_large_users_age ON large_users(age)");
+            stmt.execute("CREATE INDEX idx_large_users_score ON large_users(score)");
+            stmt.execute("CREATE INDEX idx_large_users_created_at ON large_users(created_at)");
+            stmt.execute("CREATE INDEX idx_transactions_user_id ON transactions(user_id)");
+            stmt.execute("CREATE INDEX idx_transactions_amount ON transactions(amount)");
+            stmt.execute("CREATE INDEX idx_transactions_type ON transactions(transaction_type)");
+            stmt.execute("CREATE INDEX idx_transactions_date ON transactions(transaction_date)");
+
+            // 更新統計資訊
+            stmt.execute("ANALYZE large_users");
+            stmt.execute("ANALYZE transactions");
+
+            System.out.println("性能測試資料準備完成：10,000 用戶，10,000 交易");
+        }
+    }
+
+    @Test
+    @Order(1)
+    void shouldPerformSimpleSelectQueries() {
+        System.out.println("\n=== 簡單查詢性能測試 ===");
+
+        List<String> queries = List.of(
+            "SELECT COUNT(*) FROM large_users",
+            "SELECT * FROM large_users WHERE id = 5000",
+            "SELECT * FROM large_users WHERE email = 'user5000@test.com'",
+            "SELECT * FROM large_users WHERE age BETWEEN 25 AND 35 LIMIT 100",
+            "SELECT AVG(score) FROM large_users WHERE active = true"
+        );
+
+        for (String query : queries) {
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertTrue(executionTime < 1000,
+                String.format("查詢應該在 1 秒內完成: %s (實際: %d ms)", query, executionTime));
+
+            System.out.printf("查詢: %s%n執行時間: %d ms%n結果行數: %d%n%n",
+                query.substring(0, Math.min(50, query.length())) + "...",
+                executionTime,
+                result.getRowCount());
+
+            // 記錄性能日誌
+            logPerformance("SimpleSelect", "SELECT", result.getRowCount(), executionTime);
+        }
+    }
+
+    @Test
+    @Order(2)
+    void shouldPerformComplexJoinQueries() {
+        System.out.println("\n=== 複雜關聯查詢性能測試 ===");
+
+        List<String> complexQueries = List.of(
+            """
+            SELECT u.username, u.email, COUNT(t.id) as transaction_count, SUM(t.amount) as total_amount
+            FROM large_users u
+            LEFT JOIN transactions t ON u.id = t.user_id
+            GROUP BY u.id, u.username, u.email
+            HAVING COUNT(t.id) > 0
+            ORDER BY total_amount DESC
+            LIMIT 50
+            """,
+            """
+            SELECT
+                u.age,
+                COUNT(*) as user_count,
+                AVG(u.score) as avg_score,
+                SUM(COALESCE(t.amount, 0)) as total_transactions
+            FROM large_users u
+            LEFT JOIN transactions t ON u.id = t.user_id
+            WHERE u.active = true
+            GROUP BY u.age
+            ORDER BY u.age
+            """,
+            """
+            SELECT
+                t.transaction_type,
+                DATE_TRUNC('day', t.transaction_date) as transaction_day,
+                COUNT(*) as daily_count,
+                SUM(t.amount) as daily_total
+            FROM transactions t
+            INNER JOIN large_users u ON t.user_id = u.id
+            WHERE u.score > 500
+            GROUP BY t.transaction_type, DATE_TRUNC('day', t.transaction_date)
+            ORDER BY transaction_day DESC, transaction_type
+            LIMIT 100
+            """
+        );
+
+        for (String query : complexQueries) {
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertTrue(executionTime < 5000,
+                String.format("複雜查詢應該在 5 秒內完成 (實際: %d ms)", executionTime));
+
+            System.out.printf("複雜查詢執行時間: %d ms, 結果行數: %d%n",
+                executionTime, result.getRowCount());
+
+            logPerformance("ComplexJoin", "SELECT", result.getRowCount(), executionTime);
+        }
+    }
+
+    @Test
+    @Order(3)
+    void shouldPerformBatchInsertOperations() {
+        System.out.println("\n=== 批次插入性能測試 ===");
+
+        // 測試不同批次大小的性能
+        int[] batchSizes = {100, 500, 1000, 2000};
+
+        for (int batchSize : batchSizes) {
+            List<List<Object>> batchParams = new ArrayList<>();
+
+            for (int i = 0; i < batchSize; i++) {
+                int userId = 50000 + i;  // 避免重複
+                batchParams.add(List.of(
+                    "batchuser" + userId,
+                    "batchuser" + userId + "@test.com",
+                    "BatchFirst" + userId,
+                    "BatchLast" + userId,
+                    25 + (i % 30),
+                    Math.random() * 1000
+                ));
+            }
+
+            String insertQuery = """
+                INSERT INTO large_users (username, email, first_name, last_name, age, score)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """;
+
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeBatch(connectionId, insertQuery, batchParams);
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertEquals(batchSize, result.getAffectedRows());
+
+            double recordsPerSecond = (double) batchSize / (executionTime / 1000.0);
+
+            System.out.printf("批次大小: %d, 執行時間: %d ms, 每秒處理: %.2f 筆%n",
+                batchSize, executionTime, recordsPerSecond);
+
+            logPerformance("BatchInsert", "INSERT", batchSize, executionTime);
+
+            // 清理測試資料
+            connectionService.executeQuery(connectionId,
+                "DELETE FROM large_users WHERE username LIKE 'batchuser%'", List.of());
+        }
+    }
+
+    @Test
+    @Order(4)
+    void shouldPerformConcurrentQueries() throws InterruptedException, ExecutionException {
+        System.out.println("\n=== 並發查詢性能測試 ===");
+
+        int threadCount = 10;
+        int queriesPerThread = 20;
+
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<Long>> futures = new ArrayList<>();
+
+        String concurrentQuery = "SELECT * FROM large_users WHERE age = ? AND score > ? LIMIT 10";
+
+        Instant overallStart = Instant.now();
+
+        for (int i = 0; i < threadCount; i++) {
+            final int threadId = i;
+
+            Future<Long> future = executor.submit(() -> {
+                long threadTotalTime = 0;
+
+                for (int j = 0; j < queriesPerThread; j++) {
+                    int age = 20 + (threadId * queriesPerThread + j) % 50;
+                    double score = Math.random() * 500;
+
+                    Instant queryStart = Instant.now();
+
+                    QueryResult result = connectionService.executeQuery(
+                        connectionId,
+                        concurrentQuery,
+                        List.of(age, score)
+                    );
+
+                    Duration queryDuration = Duration.between(queryStart, Instant.now());
+                    threadTotalTime += queryDuration.toMillis();
+
+                    assertNotNull(result);
+                }
+
+                return threadTotalTime;
+            });
+
+            futures.add(future);
+        }
+
+        // 等待所有線程完成
+        long totalExecutionTime = 0;
+        for (Future<Long> future : futures) {
+            totalExecutionTime += future.get();
+        }
+
+        executor.shutdown();
+
+        Duration overallDuration = Duration.between(overallStart, Instant.now());
+        long overallTime = overallDuration.toMillis();
+
+        int totalQueries = threadCount * queriesPerThread;
+        double avgTimePerQuery = (double) totalExecutionTime / totalQueries;
+        double queriesPerSecond = (double) totalQueries / (overallTime / 1000.0);
+
+        System.out.printf("並發測試結果:%n");
+        System.out.printf("線程數: %d%n", threadCount);
+        System.out.printf("每線程查詢數: %d%n", queriesPerThread);
+        System.out.printf("總查詢數: %d%n", totalQueries);
+        System.out.printf("總執行時間: %d ms%n", overallTime);
+        System.out.printf("平均每查詢時間: %.2f ms%n", avgTimePerQuery);
+        System.out.printf("每秒查詢數: %.2f%n", queriesPerSecond);
+
+        assertTrue(avgTimePerQuery < 500, "平均查詢時間應該少於 500ms");
+        assertTrue(queriesPerSecond > 10, "每秒應該能處理超過 10 個查詢");
+
+        logPerformance("ConcurrentQueries", "CONCURRENT_SELECT", totalQueries, overallTime);
+    }
+
+    @Test
+    @Order(5)
+    void shouldPerformTransactionThroughput() {
+        System.out.println("\n=== 事務處理性能測試 ===");
+
+        // 測試不同事務大小的性能
+        int[] transactionSizes = {5, 10, 20, 50};
+
+        for (int txnSize : transactionSizes) {
+            List<QueryRequest> queries = new ArrayList<>();
+
+            for (int i = 0; i < txnSize; i++) {
+                queries.add(QueryRequest.builder()
+                    .query("INSERT INTO transactions (user_id, amount, transaction_type, description) VALUES (?, ?, ?, ?)")
+                    .params(List.of(
+                        (int) (Math.random() * 10000) + 1,
+                        Math.random() * 500,
+                        "perf_test",
+                        "Performance test transaction " + i
+                    ))
+                    .build());
+            }
+
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeTransaction(connectionId, queries);
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertTrue(result.isTransactionSuccessful());
+
+            double transactionsPerSecond = (double) txnSize / (executionTime / 1000.0);
+
+            System.out.printf("事務大小: %d, 執行時間: %d ms, 每秒事務數: %.2f%n",
+                txnSize, executionTime, transactionsPerSecond);
+
+            logPerformance("Transaction", "TRANSACTION", txnSize, executionTime);
+
+            // 清理測試資料
+            connectionService.executeQuery(connectionId,
+                "DELETE FROM transactions WHERE transaction_type = 'perf_test'", List.of());
+        }
+    }
+
+    @Test
+    @Order(6)
+    void shouldPerformLargeResultSetHandling() {
+        System.out.println("\n=== 大結果集處理性能測試 ===");
+
+        // 測試不同限制大小的查詢性能
+        int[] limits = {1000, 5000, 10000};
+
+        for (int limit : limits) {
+            String query = "SELECT * FROM large_users ORDER BY id LIMIT " + limit;
+
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertEquals(limit, result.getRowCount());
+
+            double recordsPerSecond = (double) limit / (executionTime / 1000.0);
+
+            System.out.printf("結果集大小: %d, 執行時間: %d ms, 每秒處理記錄數: %.2f%n",
+                limit, executionTime, recordsPerSecond);
+
+            assertTrue(executionTime < 10000,
+                String.format("大結果集查詢應該在 10 秒內完成 (實際: %d ms)", executionTime));
+
+            logPerformance("LargeResultSet", "SELECT", limit, executionTime);
+        }
+    }
+
+    @Test
+    @Order(7)
+    void shouldAnalyzeQueryPerformanceWithExplain() {
+        System.out.println("\n=== 查詢計畫分析性能測試 ===");
+
+        List<String> analysisQueries = List.of(
+            "SELECT * FROM large_users WHERE age > 30",
+            "SELECT * FROM large_users WHERE score BETWEEN 400 AND 600",
+            """
+            SELECT u.username, COUNT(t.id) as tx_count
+            FROM large_users u
+            LEFT JOIN transactions t ON u.id = t.user_id
+            GROUP BY u.id, u.username
+            HAVING COUNT(t.id) > 0
+            LIMIT 100
+            """
+        );
+
+        for (String query : analysisQueries) {
+            // 先執行 EXPLAIN
+            Instant explainStart = Instant.now();
+            QueryResult explainResult = connectionService.explainQuery(connectionId, query, false);
+            Duration explainDuration = Duration.between(explainStart, Instant.now());
+
+            // 再執行 EXPLAIN ANALYZE
+            Instant analyzeStart = Instant.now();
+            QueryResult analyzeResult = connectionService.explainQuery(connectionId, query, true);
+            Duration analyzeDuration = Duration.between(analyzeStart, Instant.now());
+
+            // 執行實際查詢
+            Instant queryStart = Instant.now();
+            QueryResult actualResult = connectionService.executeQuery(connectionId, query, List.of());
+            Duration queryDuration = Duration.between(queryStart, Instant.now());
+
+            assertNotNull(explainResult);
+            assertNotNull(analyzeResult);
+            assertNotNull(actualResult);
+
+            System.out.printf("查詢分析結果:%n");
+            System.out.printf("EXPLAIN 時間: %d ms%n", explainDuration.toMillis());
+            System.out.printf("EXPLAIN ANALYZE 時間: %d ms%n", analyzeDuration.toMillis());
+            System.out.printf("實際查詢時間: %d ms%n", queryDuration.toMillis());
+            System.out.printf("返回行數: %d%n%n", actualResult.getRowCount());
+
+            assertTrue(explainDuration.toMillis() < 1000, "EXPLAIN 應該在 1 秒內完成");
+            assertTrue(analyzeDuration.toMillis() < 5000, "EXPLAIN ANALYZE 應該在 5 秒內完成");
+        }
+    }
+
+    @Test
+    @Order(8)
+    void shouldGeneratePerformanceReport() {
+        System.out.println("\n=== 生成性能測試報告 ===");
+
+        QueryResult performanceStats = connectionService.executeQuery(connectionId, """
+            SELECT
+                test_name,
+                operation_type,
+                COUNT(*) as test_count,
+                AVG(execution_time_ms) as avg_time_ms,
+                MIN(execution_time_ms) as min_time_ms,
+                MAX(execution_time_ms) as max_time_ms,
+                AVG(records_per_second) as avg_records_per_sec
+            FROM performance_log
+            GROUP BY test_name, operation_type
+            ORDER BY test_name, operation_type
+            """, List.of());
+
+        assertNotNull(performanceStats);
+        assertTrue(performanceStats.getRowCount() > 0);
+
+        System.out.println("\n性能測試統計報告:");
+        System.out.println("================================");
+
+        for (Map<String, Object> stat : performanceStats.getRows()) {
+            System.out.printf("測試類型: %s - %s%n", stat.get("test_name"), stat.get("operation_type"));
+            System.out.printf("  測試次數: %s%n", stat.get("test_count"));
+            System.out.printf("  平均時間: %.2f ms%n", ((Number) stat.get("avg_time_ms")).doubleValue());
+            System.out.printf("  最小時間: %s ms%n", stat.get("min_time_ms"));
+            System.out.printf("  最大時間: %s ms%n", stat.get("max_time_ms"));
+            if (stat.get("avg_records_per_sec") != null) {
+                System.out.printf("  平均處理速度: %.2f 記錄/秒%n",
+                    ((Number) stat.get("avg_records_per_sec")).doubleValue());
+            }
+            System.out.println();
+        }
+    }
+
+    private void logPerformance(String testName, String operationType, int recordCount, long executionTimeMs) {
+        double recordsPerSecond = (executionTimeMs > 0) ? (double) recordCount / (executionTimeMs / 1000.0) : 0;
+
+        try {
+            connectionService.executeQuery(connectionId, """
+                INSERT INTO performance_log (test_name, operation_type, record_count, execution_time_ms, records_per_second)
+                VALUES (?, ?, ?, ?, ?)
+                """, List.of(testName, operationType, recordCount, executionTimeMs, recordsPerSecond));
+        } catch (Exception e) {
+            System.err.println("無法記錄性能日誌: " + e.getMessage());
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (connectionService != null && connectionId != null) {
+            try {
+                connectionService.removeConnection(connectionId);
+            } catch (Exception e) {
+                System.err.println("清理連線時發生錯誤: " + e.getMessage());
+            }
+        }
+    }
+}

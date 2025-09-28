@@ -1,0 +1,775 @@
+package com.mcpregistry.performance;
+
+import com.mcp.mysql.service.DatabaseConnectionService;
+import com.mcpregistry.core.entity.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * MySQL MCP Server 性能測試
+ * 測試各種場景下的性能表現
+ */
+@ExtendWith(MockitoExtension.class)
+@Testcontainers
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class MySQLPerformanceTest {
+
+    @Container
+    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+            .withDatabaseName("perftest")
+            .withUsername("perfuser")
+            .withPassword("perfpass")
+            .withConfigurationOverride("mysql-perf-config");
+
+    private DatabaseConnectionService connectionService;
+    private String connectionId;
+
+    @BeforeAll
+    static void beforeAll() {
+        // 設置測試環境變數
+        System.setProperty("test.performance.enabled", "true");
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        connectionService = new DatabaseConnectionService();
+        connectionId = "perf-mysql";
+
+        // 設置高性能連線配置
+        ConnectionConfig config = ConnectionConfig.builder()
+                .connectionId(connectionId)
+                .host(mysql.getHost())
+                .port(mysql.getFirstMappedPort())
+                .database(mysql.getDatabaseName())
+                .username(mysql.getUsername())
+                .password(mysql.getPassword())
+                .maxPoolSize(20)  // 更大的連線池
+                .build();
+
+        boolean added = connectionService.addConnection(config);
+        assertTrue(added, "MySQL 高性能連線應該成功建立");
+
+        setupPerformanceTestData();
+    }
+
+    private void setupPerformanceTestData() throws Exception {
+        String jdbcUrl = mysql.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, mysql.getUsername(), mysql.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            // 建立大型測試表格
+            stmt.execute("""
+                CREATE TABLE large_customers (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_code VARCHAR(50) NOT NULL UNIQUE,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    first_name VARCHAR(100) NOT NULL,
+                    last_name VARCHAR(100) NOT NULL,
+                    age INT,
+                    credit_score DECIMAL(10,2),
+                    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_customer_code (customer_code),
+                    INDEX idx_email (email),
+                    INDEX idx_age (age),
+                    INDEX idx_credit_score (credit_score),
+                    INDEX idx_status (status),
+                    INDEX idx_created_at (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            stmt.execute("""
+                CREATE TABLE orders (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    customer_id INT NOT NULL,
+                    order_number VARCHAR(100) UNIQUE NOT NULL,
+                    amount DECIMAL(12,2) NOT NULL,
+                    order_status ENUM('pending', 'processing', 'completed', 'cancelled') DEFAULT 'pending',
+                    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ship_date DATETIME NULL,
+                    notes TEXT,
+                    FOREIGN KEY (customer_id) REFERENCES large_customers(id),
+                    INDEX idx_customer_id (customer_id),
+                    INDEX idx_order_number (order_number),
+                    INDEX idx_amount (amount),
+                    INDEX idx_status (order_status),
+                    INDEX idx_order_date (order_date),
+                    INDEX idx_ship_date (ship_date)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            stmt.execute("""
+                CREATE TABLE performance_metrics (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    test_name VARCHAR(100) NOT NULL,
+                    operation_type VARCHAR(50) NOT NULL,
+                    record_count INT,
+                    execution_time_ms BIGINT,
+                    records_per_second DECIMAL(10,2),
+                    memory_usage_mb DECIMAL(10,2),
+                    test_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_test_name (test_name),
+                    INDEX idx_operation_type (operation_type),
+                    INDEX idx_test_timestamp (test_timestamp)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+
+            // 插入大量測試資料
+            System.out.println("正在插入 MySQL 性能測試資料...");
+
+            // 分批插入客戶資料
+            for (int batch = 0; batch < 15; batch++) {
+                StringBuilder insertQuery = new StringBuilder(
+                    "INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score, status) VALUES ");
+
+                for (int i = 0; i < 1000; i++) {
+                    int customerId = batch * 1000 + i + 1;
+                    if (i > 0) insertQuery.append(", ");
+
+                    String status = switch (customerId % 3) {
+                        case 0 -> "active";
+                        case 1 -> "inactive";
+                        default -> "suspended";
+                    };
+
+                    insertQuery.append(String.format(
+                        "('CUST%06d', 'customer%d@test.com', 'First%d', 'Last%d', %d, %.2f, '%s')",
+                        customerId, customerId, customerId, customerId,
+                        18 + (customerId % 65),
+                        300 + (Math.random() * 500),
+                        status
+                    ));
+                }
+
+                stmt.execute(insertQuery.toString());
+
+                if (batch % 3 == 0) {
+                    System.out.printf("已插入 %d 筆客戶資料...%n", (batch + 1) * 1000);
+                }
+            }
+
+            // 插入訂單資料
+            for (int batch = 0; batch < 8; batch++) {
+                StringBuilder orderQuery = new StringBuilder(
+                    "INSERT INTO orders (customer_id, order_number, amount, order_status, notes) VALUES ");
+
+                for (int i = 0; i < 2000; i++) {
+                    int customerId = (int) (Math.random() * 15000) + 1;
+                    int orderId = batch * 2000 + i + 1;
+                    double amount = 50 + (Math.random() * 950);
+
+                    String status = switch ((int) (Math.random() * 4)) {
+                        case 0 -> "pending";
+                        case 1 -> "processing";
+                        case 2 -> "completed";
+                        default -> "cancelled";
+                    };
+
+                    if (i > 0) orderQuery.append(", ");
+                    orderQuery.append(String.format(
+                        "(%d, 'ORD%08d', %.2f, '%s', 'Performance test order %d')",
+                        customerId, orderId, amount, status, orderId
+                    ));
+                }
+
+                stmt.execute(orderQuery.toString());
+            }
+
+            // 更新統計資訊
+            stmt.execute("ANALYZE TABLE large_customers");
+            stmt.execute("ANALYZE TABLE orders");
+
+            System.out.println("MySQL 性能測試資料準備完成：15,000 客戶，16,000 訂單");
+        }
+    }
+
+    @Test
+    @Order(1)
+    void shouldPerformBasicSelectQueries() {
+        System.out.println("\n=== MySQL 基本查詢性能測試 ===");
+
+        List<String> queries = List.of(
+            "SELECT COUNT(*) FROM large_customers",
+            "SELECT * FROM large_customers WHERE id = 7500",
+            "SELECT * FROM large_customers WHERE customer_code = 'CUST007500'",
+            "SELECT * FROM large_customers WHERE age BETWEEN 30 AND 40 LIMIT 200",
+            "SELECT AVG(credit_score) FROM large_customers WHERE status = 'active'",
+            "SELECT COUNT(*) FROM orders WHERE order_status = 'completed'"
+        );
+
+        for (String query : queries) {
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertTrue(executionTime < 2000,
+                String.format("MySQL 查詢應該在 2 秒內完成: %s (實際: %d ms)", query, executionTime));
+
+            System.out.printf("查詢: %s%n執行時間: %d ms%n結果行數: %d%n%n",
+                query.substring(0, Math.min(60, query.length())) + (query.length() > 60 ? "..." : ""),
+                executionTime,
+                result.getRowCount());
+
+            logPerformance("BasicSelect", "SELECT", result.getRowCount(), executionTime);
+        }
+    }
+
+    @Test
+    @Order(2)
+    void shouldPerformComplexAggregationQueries() {
+        System.out.println("\n=== MySQL 複雜聚合查詢性能測試 ===");
+
+        List<String> complexQueries = List.of(
+            """
+            SELECT
+                c.status,
+                COUNT(*) as customer_count,
+                AVG(c.credit_score) as avg_credit_score,
+                COUNT(o.id) as total_orders,
+                COALESCE(SUM(o.amount), 0) as total_order_amount
+            FROM large_customers c
+            LEFT JOIN orders o ON c.id = o.customer_id
+            GROUP BY c.status
+            ORDER BY total_order_amount DESC
+            """,
+            """
+            SELECT
+                YEAR(o.order_date) as order_year,
+                MONTH(o.order_date) as order_month,
+                o.order_status,
+                COUNT(*) as order_count,
+                SUM(o.amount) as monthly_revenue,
+                AVG(o.amount) as avg_order_value
+            FROM orders o
+            WHERE o.order_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            GROUP BY YEAR(o.order_date), MONTH(o.order_date), o.order_status
+            ORDER BY order_year DESC, order_month DESC, order_status
+            """,
+            """
+            SELECT
+                c.age_group,
+                COUNT(DISTINCT c.id) as customers,
+                COUNT(o.id) as orders,
+                AVG(o.amount) as avg_order_value,
+                MAX(o.amount) as max_order_value
+            FROM (
+                SELECT *,
+                    CASE
+                        WHEN age < 25 THEN 'Young'
+                        WHEN age < 40 THEN 'Adult'
+                        WHEN age < 60 THEN 'Middle Age'
+                        ELSE 'Senior'
+                    END as age_group
+                FROM large_customers
+                WHERE status = 'active'
+            ) c
+            LEFT JOIN orders o ON c.id = o.customer_id AND o.order_status = 'completed'
+            GROUP BY c.age_group
+            ORDER BY customers DESC
+            """
+        );
+
+        for (String query : complexQueries) {
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertTrue(executionTime < 8000,
+                String.format("MySQL 複雜查詢應該在 8 秒內完成 (實際: %d ms)", executionTime));
+
+            System.out.printf("複雜聚合查詢執行時間: %d ms, 結果行數: %d%n",
+                executionTime, result.getRowCount());
+
+            logPerformance("ComplexAggregation", "SELECT", result.getRowCount(), executionTime);
+        }
+    }
+
+    @Test
+    @Order(3)
+    void shouldPerformBatchInsertWithDifferentEngines() {
+        System.out.println("\n=== MySQL 批次插入性能測試 ===");
+
+        // 測試不同批次大小
+        int[] batchSizes = {50, 200, 500, 1000, 2000};
+
+        for (int batchSize : batchSizes) {
+            List<List<Object>> batchParams = new ArrayList<>();
+
+            for (int i = 0; i < batchSize; i++) {
+                int customerId = 100000 + i;  // 避免重複
+                batchParams.add(List.of(
+                    "BATCH" + String.format("%06d", customerId),
+                    "batch" + customerId + "@test.com",
+                    "BatchFirst" + customerId,
+                    "BatchLast" + customerId,
+                    25 + (i % 40),
+                    400 + (Math.random() * 400),
+                    "active"
+                ));
+            }
+
+            String insertQuery = """
+                INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
+
+            Instant start = Instant.now();
+
+            QueryResult result = connectionService.executeBatch(connectionId, insertQuery, batchParams);
+
+            Duration duration = Duration.between(start, Instant.now());
+            long executionTime = duration.toMillis();
+
+            assertNotNull(result);
+            assertEquals(batchSize, result.getAffectedRows());
+
+            double recordsPerSecond = (double) batchSize / (executionTime / 1000.0);
+
+            System.out.printf("MySQL 批次大小: %d, 執行時間: %d ms, 每秒插入: %.2f 筆%n",
+                batchSize, executionTime, recordsPerSecond);
+
+            assertTrue(recordsPerSecond > 100, "MySQL 批次插入每秒應該超過 100 筆記錄");
+
+            logPerformance("BatchInsert", "INSERT", batchSize, executionTime);
+
+            // 清理測試資料
+            connectionService.executeQuery(connectionId,
+                "DELETE FROM large_customers WHERE customer_code LIKE 'BATCH%'", List.of());
+        }
+    }
+
+    @Test
+    @Order(4)
+    void shouldPerformConcurrentReadWrites() throws InterruptedException, ExecutionException {
+        System.out.println("\n=== MySQL 並發讀寫性能測試 ===");
+
+        int readerThreads = 8;
+        int writerThreads = 2;
+        int operationsPerThread = 15;
+
+        ExecutorService executor = Executors.newFixedThreadPool(readerThreads + writerThreads);
+        List<Future<OperationResult>> futures = new ArrayList<>();
+
+        Instant overallStart = Instant.now();
+
+        // 啟動讀取線程
+        for (int i = 0; i < readerThreads; i++) {
+            final int threadId = i;
+
+            Future<OperationResult> future = executor.submit(() -> {
+                long totalTime = 0;
+                int successCount = 0;
+
+                for (int j = 0; j < operationsPerThread; j++) {
+                    try {
+                        int customerId = 1 + (int) (Math.random() * 15000);
+
+                        Instant start = Instant.now();
+
+                        QueryResult result = connectionService.executeQuery(
+                            connectionId,
+                            """
+                            SELECT c.*, COUNT(o.id) as order_count, COALESCE(SUM(o.amount), 0) as total_spent
+                            FROM large_customers c
+                            LEFT JOIN orders o ON c.id = o.customer_id
+                            WHERE c.id = ?
+                            GROUP BY c.id
+                            """,
+                            List.of(customerId)
+                        );
+
+                        Duration duration = Duration.between(start, Instant.now());
+                        totalTime += duration.toMillis();
+
+                        if (result != null) {
+                            successCount++;
+                        }
+
+                    } catch (Exception e) {
+                        System.err.printf("讀取線程 %d 發生錯誤: %s%n", threadId, e.getMessage());
+                    }
+                }
+
+                return new OperationResult("READ", threadId, successCount, totalTime);
+            });
+
+            futures.add(future);
+        }
+
+        // 啟動寫入線程
+        for (int i = 0; i < writerThreads; i++) {
+            final int threadId = i + readerThreads;
+
+            Future<OperationResult> future = executor.submit(() -> {
+                long totalTime = 0;
+                int successCount = 0;
+
+                for (int j = 0; j < operationsPerThread; j++) {
+                    try {
+                        int customerId = 200000 + threadId * 1000 + j;
+
+                        Instant start = Instant.now();
+
+                        QueryResult result = connectionService.executeQuery(
+                            connectionId,
+                            """
+                            INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score, status)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            List.of(
+                                "CONC" + String.format("%06d", customerId),
+                                "concurrent" + customerId + "@test.com",
+                                "ConcFirst" + customerId,
+                                "ConcLast" + customerId,
+                                25 + (j % 35),
+                                350 + (Math.random() * 350),
+                                "active"
+                            )
+                        );
+
+                        Duration duration = Duration.between(start, Instant.now());
+                        totalTime += duration.toMillis();
+
+                        if (result != null && result.getAffectedRows() > 0) {
+                            successCount++;
+                        }
+
+                    } catch (Exception e) {
+                        System.err.printf("寫入線程 %d 發生錯誤: %s%n", threadId, e.getMessage());
+                    }
+                }
+
+                return new OperationResult("WRITE", threadId, successCount, totalTime);
+            });
+
+            futures.add(future);
+        }
+
+        // 收集結果
+        List<OperationResult> results = new ArrayList<>();
+        for (Future<OperationResult> future : futures) {
+            results.add(future.get());
+        }
+
+        executor.shutdown();
+
+        Duration overallDuration = Duration.between(overallStart, Instant.now());
+
+        // 分析結果
+        long totalReadTime = results.stream()
+            .filter(r -> "READ".equals(r.operationType))
+            .mapToLong(r -> r.totalTime)
+            .sum();
+
+        long totalWriteTime = results.stream()
+            .filter(r -> "WRITE".equals(r.operationType))
+            .mapToLong(r -> r.totalTime)
+            .sum();
+
+        int totalReads = results.stream()
+            .filter(r -> "READ".equals(r.operationType))
+            .mapToInt(r -> r.successCount)
+            .sum();
+
+        int totalWrites = results.stream()
+            .filter(r -> "WRITE".equals(r.operationType))
+            .mapToInt(r -> r.successCount)
+            .sum();
+
+        System.out.printf("MySQL 並發測試結果:%n");
+        System.out.printf("總執行時間: %d ms%n", overallDuration.toMillis());
+        System.out.printf("讀取操作: %d 次, 平均時間: %.2f ms%n", totalReads, (double) totalReadTime / totalReads);
+        System.out.printf("寫入操作: %d 次, 平均時間: %.2f ms%n", totalWrites, (double) totalWriteTime / totalWrites);
+        System.out.printf("讀取吞吐量: %.2f 操作/秒%n", (double) totalReads / (overallDuration.toMillis() / 1000.0));
+        System.out.printf("寫入吞吐量: %.2f 操作/秒%n", (double) totalWrites / (overallDuration.toMillis() / 1000.0));
+
+        assertTrue(totalReads > 0, "應該有成功的讀取操作");
+        assertTrue(totalWrites > 0, "應該有成功的寫入操作");
+
+        logPerformance("ConcurrentReadWrite", "MIXED", totalReads + totalWrites, overallDuration.toMillis());
+
+        // 清理測試資料
+        connectionService.executeQuery(connectionId,
+            "DELETE FROM large_customers WHERE customer_code LIKE 'CONC%'", List.of());
+    }
+
+    @Test
+    @Order(5)
+    void shouldPerformTransactionWithRollback() {
+        System.out.println("\n=== MySQL 事務處理與回滾性能測試 ===");
+
+        // 測試成功事務
+        List<QueryRequest> successQueries = List.of(
+            QueryRequest.builder()
+                .query("INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score) VALUES (?, ?, ?, ?, ?, ?)")
+                .params(List.of("TXN001", "txn1@test.com", "Txn", "User1", 30, 500.0))
+                .build(),
+            QueryRequest.builder()
+                .query("INSERT INTO orders (customer_id, order_number, amount, order_status) VALUES (?, ?, ?, ?)")
+                .params(List.of(1, "TXN-ORD-001", 150.00, "pending"))
+                .build()
+        );
+
+        Instant start = Instant.now();
+        QueryResult successResult = connectionService.executeTransaction(connectionId, successQueries);
+        Duration successDuration = Duration.between(start, Instant.now());
+
+        assertTrue(successResult.isTransactionSuccessful());
+        System.out.printf("成功事務執行時間: %d ms%n", successDuration.toMillis());
+
+        // 測試失敗事務（會觸發回滾）
+        List<QueryRequest> failQueries = List.of(
+            QueryRequest.builder()
+                .query("INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score) VALUES (?, ?, ?, ?, ?, ?)")
+                .params(List.of("TXN002", "txn2@test.com", "Txn", "User2", 25, 600.0))
+                .build(),
+            QueryRequest.builder()
+                .query("INSERT INTO large_customers (customer_code, email, first_name, last_name, age, credit_score) VALUES (?, ?, ?, ?, ?, ?)")
+                .params(List.of("TXN001", "duplicate@test.com", "Dup", "User", 35, 400.0))  // 重複的 customer_code
+                .build()
+        );
+
+        start = Instant.now();
+        try {
+            QueryResult failResult = connectionService.executeTransaction(connectionId, failQueries);
+            fail("應該因為重複鍵而失敗");
+        } catch (RuntimeException e) {
+            Duration failDuration = Duration.between(start, Instant.now());
+            System.out.printf("失敗事務回滾時間: %d ms%n", failDuration.toMillis());
+            assertTrue(e.getMessage().contains("Duplicate") || e.getMessage().contains("duplicate"));
+        }
+
+        // 驗證回滾效果
+        QueryResult checkResult = connectionService.executeQuery(
+            connectionId,
+            "SELECT COUNT(*) as count FROM large_customers WHERE customer_code = 'TXN002'",
+            List.of()
+        );
+
+        assertEquals(0, ((Number) checkResult.getRows().get(0).get("count")).intValue(),
+            "TXN002 不應該存在，因為事務已回滾");
+
+        logPerformance("Transaction", "TRANSACTION", 2, successDuration.toMillis());
+
+        // 清理
+        connectionService.executeQuery(connectionId,
+            "DELETE FROM large_customers WHERE customer_code LIKE 'TXN%'", List.of());
+    }
+
+    @Test
+    @Order(6)
+    void shouldPerformIndexOptimizationTest() {
+        System.out.println("\n=== MySQL 索引優化性能測試 ===");
+
+        // 測試使用索引的查詢
+        String[] indexedQueries = {
+            "SELECT * FROM large_customers WHERE customer_code = 'CUST001000'",
+            "SELECT * FROM large_customers WHERE email = 'customer1000@test.com'",
+            "SELECT COUNT(*) FROM large_customers WHERE age BETWEEN 25 AND 35",
+            "SELECT * FROM large_customers WHERE credit_score > 700 ORDER BY credit_score DESC LIMIT 50",
+            "SELECT COUNT(*) FROM large_customers WHERE status = 'active'"
+        };
+
+        for (String query : indexedQueries) {
+            // 執行 EXPLAIN 分析查詢計畫
+            Instant explainStart = Instant.now();
+            QueryResult explainResult = connectionService.explainQuery(connectionId, query, false);
+            Duration explainDuration = Duration.between(explainStart, Instant.now());
+
+            // 執行實際查詢
+            Instant queryStart = Instant.now();
+            QueryResult actualResult = connectionService.executeQuery(connectionId, query, List.of());
+            Duration queryDuration = Duration.between(queryStart, Instant.now());
+
+            assertNotNull(explainResult);
+            assertNotNull(actualResult);
+
+            System.out.printf("索引查詢分析:%n");
+            System.out.printf("查詢: %s%n", query.substring(0, Math.min(50, query.length())) + "...");
+            System.out.printf("EXPLAIN 時間: %d ms%n", explainDuration.toMillis());
+            System.out.printf("實際執行時間: %d ms%n", queryDuration.toMillis());
+            System.out.printf("返回行數: %d%n%n", actualResult.getRowCount());
+
+            // 索引查詢應該很快
+            assertTrue(queryDuration.toMillis() < 1000,
+                String.format("索引查詢應該在 1 秒內完成 (實際: %d ms)", queryDuration.toMillis()));
+
+            logPerformance("IndexOptimized", "SELECT", actualResult.getRowCount(), queryDuration.toMillis());
+        }
+    }
+
+    @Test
+    @Order(7)
+    void shouldPerformLargeDataSetOperations() {
+        System.out.println("\n=== MySQL 大數據集操作性能測試 ===");
+
+        // 測試大結果集查詢
+        int[] limits = {5000, 10000, 15000};
+
+        for (int limit : limits) {
+            String query = "SELECT * FROM large_customers ORDER BY id LIMIT " + limit;
+
+            Instant start = Instant.now();
+            QueryResult result = connectionService.executeQuery(connectionId, query, List.of());
+            Duration duration = Duration.between(start, Instant.now());
+
+            assertNotNull(result);
+            assertEquals(limit, result.getRowCount());
+
+            double recordsPerSecond = (double) limit / (duration.toMillis() / 1000.0);
+
+            System.out.printf("大數據集查詢 - 限制: %d, 執行時間: %d ms, 處理速度: %.2f 記錄/秒%n",
+                limit, duration.toMillis(), recordsPerSecond);
+
+            assertTrue(duration.toMillis() < 15000,
+                String.format("大數據集查詢應該在 15 秒內完成 (實際: %d ms)", duration.toMillis()));
+
+            logPerformance("LargeDataSet", "SELECT", limit, duration.toMillis());
+        }
+
+        // 測試大批量更新
+        Instant updateStart = Instant.now();
+        QueryResult updateResult = connectionService.executeQuery(
+            connectionId,
+            "UPDATE large_customers SET credit_score = credit_score * 1.05 WHERE status = 'active' AND age > 30",
+            List.of()
+        );
+        Duration updateDuration = Duration.between(updateStart, Instant.now());
+
+        assertNotNull(updateResult);
+        assertTrue(updateResult.getAffectedRows() > 0);
+
+        System.out.printf("大批量更新 - 影響行數: %d, 執行時間: %d ms%n",
+            updateResult.getAffectedRows(), updateDuration.toMillis());
+
+        logPerformance("BulkUpdate", "UPDATE", updateResult.getAffectedRows(), updateDuration.toMillis());
+    }
+
+    @Test
+    @Order(8)
+    void shouldGenerateComprehensivePerformanceReport() {
+        System.out.println("\n=== MySQL 性能測試綜合報告 ===");
+
+        QueryResult performanceStats = connectionService.executeQuery(connectionId, """
+            SELECT
+                test_name,
+                operation_type,
+                COUNT(*) as test_count,
+                ROUND(AVG(execution_time_ms), 2) as avg_time_ms,
+                MIN(execution_time_ms) as min_time_ms,
+                MAX(execution_time_ms) as max_time_ms,
+                ROUND(AVG(records_per_second), 2) as avg_records_per_sec,
+                ROUND(STD(execution_time_ms), 2) as std_dev_ms
+            FROM performance_metrics
+            WHERE test_timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            GROUP BY test_name, operation_type
+            ORDER BY test_name, operation_type
+            """, List.of());
+
+        assertNotNull(performanceStats);
+        assertTrue(performanceStats.getRowCount() > 0);
+
+        System.out.println("\nMySQL 性能測試統計報告:");
+        System.out.println("=========================================");
+
+        for (Map<String, Object> stat : performanceStats.getRows()) {
+            System.out.printf("測試類型: %s - %s%n", stat.get("test_name"), stat.get("operation_type"));
+            System.out.printf("  測試次數: %s%n", stat.get("test_count"));
+            System.out.printf("  平均時間: %s ms%n", stat.get("avg_time_ms"));
+            System.out.printf("  最小時間: %s ms%n", stat.get("min_time_ms"));
+            System.out.printf("  最大時間: %s ms%n", stat.get("max_time_ms"));
+            System.out.printf("  標準差: %s ms%n", stat.get("std_dev_ms"));
+            if (stat.get("avg_records_per_sec") != null) {
+                System.out.printf("  平均處理速度: %s 記錄/秒%n", stat.get("avg_records_per_sec"));
+            }
+            System.out.println();
+        }
+
+        // 生成效能總結
+        QueryResult summary = connectionService.executeQuery(connectionId, """
+            SELECT
+                COUNT(DISTINCT test_name) as total_test_types,
+                COUNT(*) as total_operations,
+                ROUND(AVG(execution_time_ms), 2) as overall_avg_time,
+                ROUND(AVG(records_per_second), 2) as overall_avg_throughput
+            FROM performance_metrics
+            WHERE test_timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            """, List.of());
+
+        Map<String, Object> summaryRow = summary.getRows().get(0);
+        System.out.println("MySQL 性能測試總結:");
+        System.out.println("==================");
+        System.out.printf("測試類型數量: %s%n", summaryRow.get("total_test_types"));
+        System.out.printf("總操作次數: %s%n", summaryRow.get("total_operations"));
+        System.out.printf("整體平均執行時間: %s ms%n", summaryRow.get("overall_avg_time"));
+        System.out.printf("整體平均吞吐量: %s 記錄/秒%n", summaryRow.get("overall_avg_throughput"));
+    }
+
+    private void logPerformance(String testName, String operationType, int recordCount, long executionTimeMs) {
+        double recordsPerSecond = (executionTimeMs > 0) ? (double) recordCount / (executionTimeMs / 1000.0) : 0;
+
+        // 簡化的記憶體使用量計算（實際應用中可能需要更精確的方法）
+        double memoryUsageMB = Runtime.getRuntime().totalMemory() / (1024.0 * 1024.0);
+
+        try {
+            connectionService.executeQuery(connectionId, """
+                INSERT INTO performance_metrics (test_name, operation_type, record_count, execution_time_ms, records_per_second, memory_usage_mb)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """, List.of(testName, operationType, recordCount, executionTimeMs, recordsPerSecond, memoryUsageMB));
+        } catch (Exception e) {
+            System.err.println("無法記錄 MySQL 性能日誌: " + e.getMessage());
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (connectionService != null && connectionId != null) {
+            try {
+                connectionService.removeConnection(connectionId);
+            } catch (Exception e) {
+                System.err.println("清理 MySQL 連線時發生錯誤: " + e.getMessage());
+            }
+        }
+    }
+
+    // 操作結果記錄類
+    private static class OperationResult {
+        final String operationType;
+        final int threadId;
+        final int successCount;
+        final long totalTime;
+
+        OperationResult(String operationType, int threadId, int successCount, long totalTime) {
+            this.operationType = operationType;
+            this.threadId = threadId;
+            this.successCount = successCount;
+            this.totalTime = totalTime;
+        }
+    }
+}
