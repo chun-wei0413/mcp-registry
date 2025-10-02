@@ -37,8 +37,13 @@ MCP Registry 是一個基於 **Clean Architecture + DDD** 的企業級 Java 專�
 ### 技術棧
 - **Java 17**: 現代 Java 語言特性
 - **Spring Boot 3.2.1**: 企業級應用框架
+- **Spring AI MCP**: MCP 協議整合支援
+- **R2DBC**: 反應式資料庫連線
+- **Project Reactor**: 反應式程式設計
 - **Maven**: 多模組專案管理
 - **JUnit 5 + Mockito**: 單元測試框架
+- **TestContainers**: 整合測試容器化
+- **ezSpec**: BDD 行為驅動測試
 - **SLF4J + Logback**: 結構化日誌
 
 ## 專案結構

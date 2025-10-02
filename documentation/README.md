@@ -17,6 +17,8 @@
 ### 🏗️ 架構設計
 - [系統架構](ARCHITECTURE.md) - 技術架構和設計原則
 - [模組規格](MODULE_SPECIFICATIONS.md) - 各模組詳細規格
+- [Java 專案總覽](JAVA_PROJECT_OVERVIEW.md) - Java 版本的專案結構和模組介紹
+- [Clean Architecture 實現](CLEAN_ARCHITECTURE_IMPLEMENTATION.md) - 清潔架構的具體實現
 
 ### 💻 開發文檔
 - [MCP 客戶端整合範例](examples/MCP_CLIENT_EXAMPLES.md) - Python、Node.js、Claude Desktop 整合
@@ -39,9 +41,10 @@
 3. [常見問題 FAQ](guides/QA.md)
 
 ### 開發者
-1. [系統架構](ARCHITECTURE.md)
-2. [Java 遷移計畫](project/JAVA_MIGRATION_PLAN.md)
-3. [MCP 客戶端整合範例](examples/MCP_CLIENT_EXAMPLES.md)
+1. [Java 專案總覽](JAVA_PROJECT_OVERVIEW.md)
+2. [系統架構](ARCHITECTURE.md)
+3. [Java 遷移計畫](project/JAVA_MIGRATION_PLAN.md)
+4. [MCP 客戶端整合範例](examples/MCP_CLIENT_EXAMPLES.md)
 
 ### 運維人員
 1. [Docker Hub 指南](DOCKER_HUB_GUIDE.md)
