@@ -30,7 +30,7 @@
 - 🔧 **技術棧**: Java 17, Spring Boot, HikariCP, MySQL Connector/J
 - 📖 [完整文檔 →](mcp-servers/mysql-mcp/OVERVIEW.md)
 
-#### 3. [ContextEvo MCP](mcp-servers/contextevo-mcp/OVERVIEW.md)
+#### 3. [ContextCore MCP](mcp-servers/contextcore-mcp/OVERVIEW.md)
 **智能開發日誌管理系統**
 - 🎯 **解決問題**: Context 過載、檢索效率低、資訊組織困難
 - 💡 **核心功能**:
@@ -39,7 +39,7 @@
   - 多維度過濾（標籤、模組、時間、類型）
   - 本地部署、隱私安全
 - 🔧 **技術棧**: Java, Qdrant, Ollama, SQLite
-- 📖 [完整文檔 →](mcp-servers/contextevo-mcp/OVERVIEW.md)
+- 📖 [完整文檔 →](mcp-servers/contextcore-mcp/OVERVIEW.md)
 
 ---
 
@@ -100,7 +100,7 @@
 2. 選擇你需要的 MCP Server：
    - [PostgreSQL MCP](mcp-servers/postgresql-mcp/OVERVIEW.md)
    - [MySQL MCP](mcp-servers/mysql-mcp/OVERVIEW.md)
-   - [ContextEvo MCP](mcp-servers/contextevo-mcp/OVERVIEW.md)
+   - [ContextCore MCP](mcp-servers/contextcore-mcp/OVERVIEW.md)
 3. [常見問題 FAQ](guides/QA.md) - 解決疑問
 
 ### 開發者 💻
@@ -130,7 +130,7 @@
 | **Schema 管理** | `get_table_schema`, `show_index_usage`, `optimize_table` | MySQL Schema 和優化 |
 | **儲存引擎** | `get_engine_status` | InnoDB/MyISAM 狀態監控 |
 
-### ContextEvo MCP
+### ContextCore MCP
 
 | 工具類別 | 主要工具 | 用途 |
 |---------|---------|------|
@@ -189,7 +189,7 @@ const sentimentAnalysis = await mcp.callTool("mysql_query_execution", {
 });
 ```
 
-### ContextEvo 智能日誌搜尋
+### ContextCore 智能日誌搜尋
 
 ```javascript
 // 語義搜尋歷史開發記錄
@@ -215,7 +215,7 @@ const logs = await mcp.callTool("search_logs", {
 - ✅ **設定適當的安全配置** - 最小權限原則
 - ✅ **定期檢查權限設定** - 避免權限過大
 - ✅ **啟用查詢日誌記錄** - 審計和追蹤
-- ✅ **本地部署優先** - 保護資料隱私（ContextEvo MCP）
+- ✅ **本地部署優先** - 保護資料隱私（ContextCore MCP）
 - ❌ **不要停用安全驗證** - 即使在開發環境
 - ❌ **不要使用字串拼接查詢** - 使用 PreparedStatement
 
@@ -244,7 +244,7 @@ const logs = await mcp.callTool("search_logs", {
 ### 🎯 三個強大的 MCP Server
 - **PostgreSQL MCP**: 企業級 PostgreSQL 管理
 - **MySQL MCP**: MySQL 原生特性完整支援
-- **ContextEvo MCP**: 智能開發日誌管理
+- **ContextCore MCP**: 智能開發日誌管理
 
 ### 🏗️ 企業級架構
 - Clean Architecture + DDD 設計
@@ -261,7 +261,7 @@ const logs = await mcp.callTool("search_logs", {
 - 連線池優化
 - 批次操作支援
 - 響應式程式設計（R2DBC）
-- 語義向量搜尋（ContextEvo）
+- 語義向量搜尋（ContextCore）
 
 ### 📊 可觀測性
 - 結構化日誌

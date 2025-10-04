@@ -1,8 +1,8 @@
-# ContextEvo MCP - 智能開發日誌管理系統
+# ContextCore MCP - 智能開發日誌管理系統
 
 ## 專案概述
 
-ContextEvo MCP 是一個基於 MCP (Model Context Protocol) 的智能開發日誌管理系統，專為使用 Claude Code 的開發者設計。它透過向量搜尋技術，讓 LLM 能夠智能地檢索相關的歷史開發記錄，而不需要每次都載入所有日誌內容。
+ContextCore MCP 是一個基於 MCP (Model Context Protocol) 的智能開發日誌管理系統，專為使用 Claude Code 的開發者設計。它透過向量搜尋技術，讓 LLM 能夠智能地檢索相關的歷史開發記錄，而不需要每次都載入所有日誌內容。
 
 ## 要解決的問題
 
@@ -28,7 +28,7 @@ ContextEvo MCP 是一個基於 MCP (Model Context Protocol) 的智能開發日�
 
 ### 解決方案
 
-ContextEvo MCP 透過**語義向量搜尋**技術，讓 LLM 能夠：
+ContextCore MCP 透過**語義向量搜尋**技術，讓 LLM 能夠：
 - ✅ 只檢索與當前任務相關的日誌
 - ✅ 理解查詢的語義，找到概念相關的內容
 - ✅ 支援多維度過濾（標籤、模組、時間、類型）
