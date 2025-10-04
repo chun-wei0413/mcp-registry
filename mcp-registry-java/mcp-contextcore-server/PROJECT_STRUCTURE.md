@@ -4,7 +4,7 @@
 
 ```
 mcp-contextcore-server/
-├── src/main/java/io/github/frankli/mcp/contextcore/
+├── src/main/java/com/mcp/contextcore/
 │   ├── ContextCoreMCPApplication.java          # 應用程式入口點
 │   │
 │   ├── 🎯 domain/                              # Domain Layer (核心業務邏輯)
