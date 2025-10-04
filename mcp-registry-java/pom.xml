@@ -46,6 +46,7 @@
         <module>mcp-core</module>
         <module>mcp-postgresql-server</module>
         <module>mcp-mysql-server</module>
+        <module>mcp-contextcore-server</module>
         <module>testing-tools</module>
     </modules>
 
