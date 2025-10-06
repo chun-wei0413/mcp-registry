@@ -7,6 +7,19 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:development}
 
+  # Spring AI MCP Server Configuration
+  ai:
+    mcp:
+      server:
+        name: ContextCore MCP Server
+        version: 1.0.0
+        description: Intelligent Development Log Management System with Semantic Search
+        type: SYNC
+        stdio: true
+        capabilities:
+          tools: true
+          resources: true
+
 # ContextCore specific configuration
 contextcore:
   # SQLite configuration

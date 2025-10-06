@@ -1,54 +1,47 @@
 package com.mcp.contextcore.config;
 
-import io.r2dbc.spi.ConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.r2dbc.connection.init.CompositeDatabasePopulator;
-import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
-import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
+
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 /**
  * Database Configuration
  *
- * Configures R2DBC connection and database initialization for SQLite.
+ * Configures JDBC connection for SQLite database.
  */
 @Slf4j
 @Configuration
 public class DatabaseConfig {
 
-    @Value("${spring.r2dbc.url}")
-    private String databaseUrl;
+    @Value("${contextcore.sqlite.path:./data/contextcore.db}")
+    private String databasePath;
 
     /**
-     * Initializes the database schema on startup
+     * Creates SQLite JDBC connection
      */
     @Bean
-    public ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
-        log.info("Initializing database: {}", databaseUrl);
+    public Connection sqliteConnection() throws SQLException {
+        log.info("Initializing SQLite database: {}", databasePath);
 
-        ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
-        initializer.setConnectionFactory(connectionFactory);
-
-        CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
-
-        // Add schema initialization script if exists
-        try {
-            ClassPathResource schemaResource = new ClassPathResource("schema.sql");
-            if (schemaResource.exists()) {
-                log.info("Found schema.sql, executing database initialization");
-                populator.addPopulators(new ResourceDatabasePopulator(schemaResource));
-            } else {
-                log.info("No schema.sql found, skipping database initialization");
-            }
-        } catch (Exception e) {
-            log.warn("Error checking for schema.sql: {}", e.getMessage());
+        // Ensure data directory exists
+        File dbFile = new File(databasePath);
+        File parentDir = dbFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            boolean created = parentDir.mkdirs();
+            log.info("Created data directory: {} (success={})", parentDir.getAbsolutePath(), created);
         }
 
-        initializer.setDatabasePopulator(populator);
+        // Create SQLite connection
+        String jdbcUrl = "jdbc:sqlite:" + databasePath;
+        Connection connection = DriverManager.getConnection(jdbcUrl);
 
-        return initializer;
+        log.info("SQLite connection established: {}", jdbcUrl);
+        return connection;
     }
 }
