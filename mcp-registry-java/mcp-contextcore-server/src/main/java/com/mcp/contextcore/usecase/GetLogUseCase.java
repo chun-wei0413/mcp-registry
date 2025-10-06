@@ -34,8 +34,8 @@ public class GetLogUseCase {
         }
 
         return logRepository.findById(logId)
-                .doOnSuccess(log -> {
-                    if (log != null) {
+                .doOnSuccess(retrievedLog -> {
+                    if (retrievedLog != null) {
                         log.debug("Successfully retrieved log: {}", logId);
                     } else {
                         log.debug("Log not found: {}", logId);

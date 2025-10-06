@@ -26,7 +26,7 @@ public class QdrantVectorRepository implements VectorRepository {
 
     public QdrantVectorRepository(
             @Value("${qdrant.api.url:http://localhost:6333}") String qdrantUrl,
-            @Value("${qdrant.collection.name:context_logs}") String collectionName
+            @Value("${qdrant.collection.name:contextcore_logs}") String collectionName
     ) {
         this.webClient = WebClient.builder()
                 .baseUrl(qdrantUrl)

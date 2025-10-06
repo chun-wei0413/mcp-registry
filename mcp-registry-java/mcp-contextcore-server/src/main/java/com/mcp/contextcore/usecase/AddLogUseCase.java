@@ -45,17 +45,17 @@ public class AddLogUseCase {
         log.info("Adding new log: title={}, module={}, type={}", title, module, type);
 
         // 1. Create and validate log entity
-        Log log = Log.create(title, content, tags, module, type);
+        Log logEntity = Log.create(title, content, tags, module, type);
 
         try {
-            log.validate();
+            logEntity.validate();
         } catch (IllegalArgumentException e) {
             log.error("Log validation failed: {}", e.getMessage());
             return Mono.error(e);
         }
 
         // 2. Save log to repository
-        return logRepository.save(log)
+        return logRepository.save(logEntity)
                 .flatMap(savedLog -> {
                     log.debug("Log saved successfully: {}", savedLog.getId());
 

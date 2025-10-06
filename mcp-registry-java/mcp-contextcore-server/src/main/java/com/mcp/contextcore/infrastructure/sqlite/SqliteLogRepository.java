@@ -63,7 +63,7 @@ public class SqliteLogRepository implements LogRepository {
     }
 
     @Override
-    public Mono<Log> save(Log log) {
+    public Mono<Log> save(Log logEntity) {
         return Mono.fromCallable(() -> {
             String sql = """
                 INSERT OR REPLACE INTO logs (id, title, content, tags, module, type, timestamp, created_at, updated_at)
@@ -71,19 +71,19 @@ public class SqliteLogRepository implements LogRepository {
                 """;
 
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setString(1, log.getId());
-                stmt.setString(2, log.getTitle());
-                stmt.setString(3, log.getContent());
-                stmt.setString(4, log.getTags() != null ? gson.toJson(log.getTags()) : null);
-                stmt.setString(5, log.getModule());
-                stmt.setString(6, log.getType() != null ? log.getType().getValue() : null);
-                stmt.setLong(7, log.getTimestamp().toEpochMilli());
-                stmt.setLong(8, log.getCreatedAt().toEpochMilli());
-                stmt.setLong(9, log.getUpdatedAt().toEpochMilli());
+                stmt.setString(1, logEntity.getId());
+                stmt.setString(2, logEntity.getTitle());
+                stmt.setString(3, logEntity.getContent());
+                stmt.setString(4, logEntity.getTags() != null ? gson.toJson(logEntity.getTags()) : null);
+                stmt.setString(5, logEntity.getModule());
+                stmt.setString(6, logEntity.getType() != null ? logEntity.getType().getValue() : null);
+                stmt.setLong(7, logEntity.getTimestamp().toEpochMilli());
+                stmt.setLong(8, logEntity.getCreatedAt().toEpochMilli());
+                stmt.setLong(9, logEntity.getUpdatedAt().toEpochMilli());
 
                 stmt.executeUpdate();
-                log.info("Log saved: id={}, title={}", log.getId(), log.getTitle());
-                return log;
+                log.info("Log saved: id={}, title={}", logEntity.getId(), logEntity.getTitle());
+                return logEntity;
             }
         }).subscribeOn(Schedulers.boundedElastic());
     }
