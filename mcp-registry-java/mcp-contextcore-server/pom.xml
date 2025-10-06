@@ -15,12 +15,6 @@
     <name>MCP ContextCore Server</name>
     <description>ContextCore MCP Server - Intelligent Development Log Management System</description>
 
-    <properties>
-        <!-- ContextCore specific dependencies -->
-        <sqlite-jdbc.version>3.45.1.0</sqlite-jdbc.version>
-        <okhttp.version>4.12.0</okhttp.version>
-    </properties>
-
     <dependencies>
         <!-- Internal dependencies -->
         <dependency>
@@ -39,6 +33,12 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- Spring AI MCP Server Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>io.qdrant</groupId>
             <artifactId>client</artifactId>
-            <version>1.11.0</version>
+            <version>${qdrant-client.version}</version>
         </dependency>
 
         <!-- SQLite JDBC Driver -->
@@ -112,8 +112,8 @@
 
         <dependency>
             <groupId>tw.teddysoft.ezspec</groupId>
-            <artifactId>ezspec</artifactId>
-            <version>2.0.3</version>
+            <artifactId>ezspec-report</artifactId>
+            <version>${ezspec-report.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
