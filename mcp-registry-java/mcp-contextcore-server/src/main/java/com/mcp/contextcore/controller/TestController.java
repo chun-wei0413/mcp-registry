@@ -1,6 +1,5 @@
 package com.mcp.contextcore.controller;
 
-import com.mcp.contextcore.mcp.ContextCoreTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +20,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TestController {
 
-    private final ContextCoreTools contextCoreTools;
+    private final AddLogController addLogController;
+    private final SearchLogsController searchLogsController;
+    private final GetLogController getLogController;
+    private final ListLogsController listLogsController;
+    private final GetProjectContextController getProjectContextController;
 
     /**
      * Test endpoint to verify server is running
@@ -43,7 +46,7 @@ public class TestController {
         log.info("Testing addLog tool: title={}", request.title());
 
         return Mono.fromCallable(() ->
-            contextCoreTools.addLog(
+            addLogController.addLog(
                 request.title(),
                 request.content(),
                 request.tags(),
@@ -61,7 +64,7 @@ public class TestController {
         log.info("Testing searchLogs tool: query={}", request.query());
 
         return Mono.fromCallable(() ->
-            contextCoreTools.searchLogs(
+            searchLogsController.searchLogs(
                 request.query(),
                 request.limit(),
                 request.tags(),
@@ -79,7 +82,7 @@ public class TestController {
         log.info("Testing getLog tool: logId={}", logId);
 
         return Mono.fromCallable(() ->
-            contextCoreTools.getLog(logId)
+            getLogController.getLog(logId)
         ).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -95,7 +98,7 @@ public class TestController {
         log.info("Testing listLogs tool: limit={}", limit);
 
         return Mono.fromCallable(() ->
-            contextCoreTools.listLogs(tags, module, type, limit)
+            listLogsController.listLogs(tags, module, type, limit)
         ).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -107,7 +110,7 @@ public class TestController {
         log.info("Testing getProjectContext tool");
 
         return Mono.fromCallable(() ->
-            contextCoreTools.getProjectContext()
+            getProjectContextController.getProjectContext()
         ).subscribeOn(Schedulers.boundedElastic());
     }
 
