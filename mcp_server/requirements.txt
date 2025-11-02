@@ -1,0 +1,4 @@
+mcp-cli
+chromadb
+sentence-transformers
+uv

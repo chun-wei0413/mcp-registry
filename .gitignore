@@ -34,7 +34,11 @@ application-*.properties
 
 # IDEs
 .vscode/
-.idea/
+.idea
+.dev
+
+# ChromaDB
+chroma_db/
 *.iws
 *.iml
 *.ipr
