@@ -35,7 +35,6 @@ application-*.properties
 # IDEs
 .vscode/
 .idea
-.dev
 
 # ChromaDB
 chroma_db/
