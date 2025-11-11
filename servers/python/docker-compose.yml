@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  memory-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memory-mcp-server
+    ports:
+      - "8080:8080"  # MCP HTTP server port
+    volumes:
+      # Persistent storage for ChromaDB
+      - ./chroma_db:/app/chroma_db
+      # Mount project files for document ingestion
+      - ../../documentation:/app/documents:ro
+    environment:
+      - MCP_SERVER_NAME=Memory MCP Server
+      - CHROMA_DB_PATH=/app/chroma_db
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import chromadb; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
