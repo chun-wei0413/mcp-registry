@@ -348,18 +348,9 @@ SQLite: 根據 ID 批次查詢完整內容
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 開啟 Pull Request
 
-**Commit 訊息規範**：使用 `[類別] 描述` 格式
-- `[Feature Addition]` - 新增功能
-- `[Bug Fixing]` - 修復錯誤
-- `[Refactoring]` - 重構程式碼
-- `[Documentation]` - 文件更新
-- `[Deployment]` - 部署相關
-- `[Project Maintenance]` - 專案維護
-
 ## 💬 支援與聯繫
 
 - 📧 Email: a910413frank@gmail.com
-- 🐛 Issues: [GitHub Issues](../../issues)
 - 📖 完整規範: [Spec.md](Spec.md)
 
 ## 📄 授權
