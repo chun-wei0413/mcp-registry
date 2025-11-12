@@ -1,4 +1,4 @@
-mcp-cli
+fastmcp
 chromadb
 sentence-transformers
-uv
+pydantic

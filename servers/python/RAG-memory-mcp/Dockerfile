@@ -12,11 +12,12 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install CPU-only PyTorch first to avoid downloading GPU/CUDA packages (saves ~1.5GB and 5-10 minutes)
+RUN pip install --no-cache-dir torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Download embedding model during build (optional - can also do at runtime)
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Install other Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -25,11 +26,11 @@ COPY . .
 RUN mkdir -p /app/chroma_db
 
 # Expose port for MCP HTTP server (if using HTTP transport)
-EXPOSE 8080
+EXPOSE 3031
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV MCP_SERVER_NAME="Memory MCP Server"
 
-# Run the MCP server
-CMD ["python", "-m", "mcp_server"]
+# Run the MCP server in HTTP mode on port 3031
+CMD ["python", "mcp_server.py"]

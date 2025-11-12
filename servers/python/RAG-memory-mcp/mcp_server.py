@@ -118,3 +118,9 @@ def retrieve_all_by_topic(topic: str) -> RetrievalResult:
     retrieved_results = vector_store.get_all_by_topic(topic)
     return RetrievalResult(knowledge_points=retrieved_results)
 
+
+# 5. Run the MCP server
+if __name__ == "__main__":
+    # Run FastMCP server (stdio transport by default)
+    server.run()
+
