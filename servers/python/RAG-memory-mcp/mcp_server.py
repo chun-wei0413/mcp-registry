@@ -11,7 +11,11 @@ from storage import VectorStore
 vector_store = VectorStore()
 
 # 2. Initialize the FastMCP Server
-server = FastMCP("MCP Knowledge Base Server")
+server = FastMCP(
+    "MCP Knowledge Base Server",
+    host="0.0.0.0",  # Listen on all interfaces
+    port=3031         # Use port 3031
+)
 
 # 3. Define Pydantic models for structured tool output
 class KnowledgePoint(pydantic.BaseModel):
@@ -121,6 +125,7 @@ def retrieve_all_by_topic(topic: str) -> RetrievalResult:
 
 # 5. Run the MCP server
 if __name__ == "__main__":
-    # Run FastMCP server (stdio transport by default)
-    server.run()
+    # Run FastMCP server with HTTP (SSE) transport
+    # Server will listen on 0.0.0.0:3031
+    server.run(transport="sse")
 
