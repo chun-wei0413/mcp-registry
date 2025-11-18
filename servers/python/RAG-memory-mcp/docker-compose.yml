@@ -1,31 +1,53 @@
 version: '3.8'
 
 services:
-  server:
+  rag-memory-mcp:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: memory-mcp-server
+    container_name: rag-memory-mcp-server
     ports:
-      - "3031:3031"  # MCP HTTP server port
+      - "3031:3031"  # MCP Server (SSE transport)
     volumes:
-      # Persistent storage for ChromaDB
+      # Persistent storage for ChromaDB vector database
       - ./chroma_db:/app/chroma_db
-      # Mount project files for document ingestion
-      - ../../../documentation:/app/documents:ro
+
+      # Optional: Mount your documentation folder for batch indexing
+      # - /path/to/your/docs:/app/docs:ro
+
     environment:
-      - MCP_SERVER_NAME=Memory MCP Server
+      # Server configuration
+      - MCP_SERVER_NAME=RAG Memory MCP Server
       - CHROMA_DB_PATH=/app/chroma_db
+
+      # Embedding model (change if needed)
+      - EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
+      # Alternative faster model: all-MiniLM-L6-v2
+
+      # Python settings
       - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+
     restart: unless-stopped
+
     healthcheck:
-      test: ["CMD", "python", "-c", "import mcp; import chromadb; print('OK')"]
+      test: ["CMD", "python", "-c", "from app import create_app; app = create_app(); print('OK')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
     networks:
       - mcp-network
+
+    # Resource limits (optional, adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 512M
 
 networks:
   mcp-network:

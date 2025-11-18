@@ -9,20 +9,47 @@ __pycache__/
 venv/
 env/
 ENV/
+.venv/
 
-# ChromaDB data (will be mounted as volume)
+# ChromaDB database (will be mounted as volume)
 chroma_db/
+
+# Test files and data
+test_*.py
+tests/
+test_docs/
+*_test.py
+
+# Documentation (except README and ARCHITECTURE)
+*.md
+!README.md
+!ARCHITECTURE.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Git
-.git/
-.gitignore
+# OS
+.DS_Store
+Thumbs.db
 
-# Documentation
-*.md
-LICENSE
+# Docker files (not needed in image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Logs
+*.log
+logs/

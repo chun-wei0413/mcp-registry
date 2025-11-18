@@ -1,5 +1,14 @@
-fastmcp
-chromadb
-sentence-transformers
-pydantic
-uvicorn[standard]
+# MCP Framework
+fastmcp>=0.1.0
+
+# Vector Database
+chromadb>=0.4.0
+
+# Embedding Models
+sentence-transformers>=2.2.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# Web Server (for HTTP/SSE transport)
+uvicorn[standard]>=0.20.0

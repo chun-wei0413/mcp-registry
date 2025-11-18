@@ -1,4 +1,6 @@
-# Memory MCP Server - Dockerfile
+# RAG Memory MCP Server - Dockerfile
+# Layered architecture with Application Factory pattern
+
 FROM python:3.11-slim
 
 # Set working directory
@@ -19,18 +21,27 @@ RUN pip install --no-cache-dir torch torchvision torchaudio \
 # Install other Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application structure
+COPY app.py .
+COPY mcp_server.py .
+COPY controllers/ ./controllers/
+COPY services/ ./services/
+COPY models/ ./models/
 
 # Create directory for persistent storage
 RUN mkdir -p /app/chroma_db
 
-# Expose port for MCP HTTP server (if using HTTP transport)
+# Expose port for MCP HTTP/SSE server
 EXPOSE 3031
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV MCP_SERVER_NAME="Memory MCP Server"
+ENV MCP_SERVER_NAME="RAG Memory MCP Server"
+ENV CHROMA_DB_PATH=/app/chroma_db
 
-# Run the MCP server in HTTP mode on port 3031
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "from app import create_app; app = create_app(); print('OK')" || exit 1
+
+# Run the MCP server (SSE transport on port 3031)
 CMD ["python", "mcp_server.py"]
