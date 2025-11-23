@@ -5,6 +5,22 @@ MCP Knowledge Base Server - Main Entry Point
 Minimal startup script that creates and runs the MCP server.
 All configuration and initialization logic is in app.py (Application Factory).
 """
+
+# Suppress unnecessary warnings before importing any libraries
+import os
+import warnings
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Only show errors
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN messages
+
+# Suppress protobuf warnings
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+
+# Suppress general Python warnings
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+warnings.filterwarnings('ignore', category=FutureWarning)
+
 from app import create_app
 
 
