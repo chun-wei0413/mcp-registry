@@ -7,6 +7,13 @@ from pydantic import BaseModel, Field
 
 # Response Models
 
+class CodeBlock(BaseModel):
+    """A code block extracted from documentation."""
+    language: str = Field(..., description="Programming language (e.g., 'java', 'python')")
+    code: str = Field(..., description="The actual code content")
+    position: int = Field(..., description="Position index in the original document")
+
+
 class KnowledgePoint(BaseModel):
     """A single knowledge point with metadata."""
     id: str
@@ -19,6 +26,12 @@ class KnowledgePoint(BaseModel):
     file_path: Optional[str] = None
     section_title: Optional[str] = None
     chunk_type: Optional[str] = None
+
+    # Code blocks (separated from content for better semantic search)
+    code_blocks: Optional[List[CodeBlock]] = Field(
+        default=None,
+        description="Code examples associated with this knowledge point"
+    )
 
 
 class SearchResult(BaseModel):

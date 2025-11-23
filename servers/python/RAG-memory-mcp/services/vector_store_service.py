@@ -8,8 +8,10 @@ from sentence_transformers import SentenceTransformer
 import uuid
 import datetime
 import re
+import json
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from utils.markdown_parser import MarkdownParser
 
 
 class VectorStoreService:
@@ -71,7 +73,7 @@ class VectorStoreService:
             topic (str, optional): A topic to filter the search. Defaults to None.
 
         Returns:
-            List[Dict[str, Any]]: A list of result dictionaries.
+            List[Dict[str, Any]]: A list of result dictionaries with code blocks.
         """
         query_embedding = self.model.encode(query).tolist()
 
@@ -91,14 +93,37 @@ class VectorStoreService:
 
         for i, doc_id in enumerate(results["ids"][0]):
             metadata = results["metadatas"][0][i]
-            formatted_results.append({
+
+            # Parse code_blocks from metadata if present
+            code_blocks = None
+            if "code_blocks" in metadata:
+                try:
+                    code_blocks = json.loads(metadata["code_blocks"])
+                except json.JSONDecodeError:
+                    code_blocks = None
+
+            result = {
                 "id": doc_id,
                 "content": results["documents"][0][i],
                 "topic": metadata.get("topic"),
                 "similarity": results["distances"][0][i],
                 "timestamp": metadata.get("timestamp")
-            })
-        
+            }
+
+            # Add optional metadata
+            if metadata.get("file_path"):
+                result["file_path"] = metadata["file_path"]
+            if metadata.get("section_title"):
+                result["section_title"] = metadata["section_title"]
+            if metadata.get("chunk_type"):
+                result["chunk_type"] = metadata["chunk_type"]
+
+            # Add code blocks if present
+            if code_blocks:
+                result["code_blocks"] = code_blocks
+
+            formatted_results.append(result)
+
         return formatted_results
 
     def get_all_by_topic(self, topic: str) -> List[Dict[str, Any]]:
@@ -109,7 +134,7 @@ class VectorStoreService:
             topic (str): The topic to retrieve.
 
         Returns:
-            List[Dict[str, Any]]: A list of result dictionaries.
+            List[Dict[str, Any]]: A list of result dictionaries with code blocks.
         """
         results = self.collection.get(where={"topic": topic})
 
@@ -120,12 +145,35 @@ class VectorStoreService:
 
         for i, doc_id in enumerate(results["ids"]):
             metadata = results["metadatas"][i]
-            formatted_results.append({
+
+            # Parse code_blocks from metadata if present
+            code_blocks = None
+            if "code_blocks" in metadata:
+                try:
+                    code_blocks = json.loads(metadata["code_blocks"])
+                except json.JSONDecodeError:
+                    code_blocks = None
+
+            result = {
                 "id": doc_id,
                 "content": results["documents"][i],
                 "topic": metadata.get("topic"),
                 "timestamp": metadata.get("timestamp")
-            })
+            }
+
+            # Add optional metadata
+            if metadata.get("file_path"):
+                result["file_path"] = metadata["file_path"]
+            if metadata.get("section_title"):
+                result["section_title"] = metadata["section_title"]
+            if metadata.get("chunk_type"):
+                result["chunk_type"] = metadata["chunk_type"]
+
+            # Add code blocks if present
+            if code_blocks:
+                result["code_blocks"] = code_blocks
+
+            formatted_results.append(result)
 
         return formatted_results
 
@@ -166,13 +214,30 @@ class VectorStoreService:
             # Generic: recursive character splitting
             return self._chunk_recursive(content, metadata, chunk_size, chunk_overlap)
 
-    def _add_single_chunk(self, content: str, metadata: Dict[str, Any]) -> str:
-        """Helper to add a single chunk to the vector store."""
+    def _add_single_chunk(self, content: str, metadata: Dict[str, Any], code_blocks: List[Dict] = None) -> str:
+        """
+        Helper to add a single chunk to the vector store.
+
+        Args:
+            content: The text content (without code blocks) for embedding
+            metadata: Metadata dictionary
+            code_blocks: Optional list of code blocks associated with this chunk
+
+        Returns:
+            str: The document ID
+        """
         doc_id = str(uuid.uuid4())
         timestamp = datetime.datetime.utcnow().isoformat()
+
+        # IMPORTANT: Only embed the text content, NOT the code
         embedding = self.model.encode(content).tolist()
 
+        # Prepare metadata
         full_metadata = {**metadata, "timestamp": timestamp, "chunk_type": "complete"}
+
+        # Store code blocks as JSON string in metadata if provided
+        if code_blocks:
+            full_metadata["code_blocks"] = json.dumps(code_blocks)
 
         self.collection.add(
             ids=[doc_id],
@@ -183,42 +248,35 @@ class VectorStoreService:
         return doc_id
 
     def _chunk_markdown(self, content: str, metadata: Dict[str, Any], max_size: int) -> List[str]:
-        """Split markdown by headers (H2, H3)."""
+        """
+        Split markdown by headers with intelligent code block extraction.
+
+        This method uses the MarkdownParser to:
+        1. Separate code blocks from descriptive text
+        2. Only embed the descriptive text (improves semantic search)
+        3. Store code blocks in metadata for complete retrieval
+        """
         doc_ids = []
 
-        # Split by H2 headers
-        sections = re.split(r'\n##\s+', content)
+        # Use intelligent chunking with code awareness
+        chunks = MarkdownParser.chunk_with_code_awareness(content, max_size)
 
-        for i, section in enumerate(sections):
-            if not section.strip():
-                continue
+        for i, chunk in enumerate(chunks):
+            chunk_metadata = {
+                **metadata,
+                "section_title": chunk['section_title'],
+                "chunk_type": "section" if chunk['is_complete'] else "section_part",
+            }
 
-            # Extract section title
-            lines = section.split('\n', 1)
-            section_title = lines[0].strip() if lines else "Introduction"
-            section_content = lines[1] if len(lines) > 1 else section
-
-            # If section is still too large, split further
-            if len(section_content) > max_size:
-                sub_chunks = self._split_text_recursive(section_content, max_size)
-                for j, chunk in enumerate(sub_chunks):
-                    chunk_metadata = {
-                        **metadata,
-                        "section_title": section_title,
-                        "chunk_type": "section_part",
-                        "part": j + 1,
-                        "total_parts": len(sub_chunks)
-                    }
-                    formatted_chunk = f"## {section_title} (Part {j+1})\n\n{chunk}"
-                    doc_ids.append(self._add_single_chunk(formatted_chunk, chunk_metadata))
-            else:
-                chunk_metadata = {
-                    **metadata,
-                    "section_title": section_title,
-                    "chunk_type": "section"
-                }
-                formatted_chunk = f"## {section_title}\n\n{section_content}"
-                doc_ids.append(self._add_single_chunk(formatted_chunk, chunk_metadata))
+            # Add the chunk with separated code blocks
+            # IMPORTANT: Only chunk['description'] is embedded, NOT the code
+            doc_ids.append(
+                self._add_single_chunk(
+                    content=chunk['description'],
+                    metadata=chunk_metadata,
+                    code_blocks=chunk['code_blocks'] if chunk['code_blocks'] else None
+                )
+            )
 
         return doc_ids
 

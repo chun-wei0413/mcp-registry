@@ -18,13 +18,13 @@ def register_knowledge_tools(server, vector_store: VectorStoreService):
     """
 
     @server.tool()
-    def search_knowledge(query: str, top_k: int = 5, topic: Optional[str] = None) -> SearchResult:
+    def search_knowledge(query: str, top_k: int = 50, topic: Optional[str] = None) -> SearchResult:
         """
         Performs a semantic search for knowledge.
 
         Args:
             query: The natural language question to search for.
-            top_k: The maximum number of results to return.
+            top_k: The maximum number of results to return (default: 50).
             topic: An optional topic to filter the search within.
 
         Returns:
