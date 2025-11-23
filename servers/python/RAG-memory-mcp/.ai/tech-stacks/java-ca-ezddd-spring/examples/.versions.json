@@ -1,0 +1,366 @@
+{
+  "version": "1.0.0",
+  "lastCheck": "2025-08-05T03:02:21+08:00",
+  "templates": {
+    "aggregate/Plan.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/entity/Plan.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "aggregate/PlanEvents.java": {
+      "version": "1.1.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/entity/PlanEvents.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": [
+        "Refactored to use ProjectName value object"
+      ]
+    },
+    "aggregate/PlanId.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/entity/PlanId.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "aggregate/ProjectId.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/entity/ProjectId.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "aggregate/ProjectName.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/entity/ProjectName.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "aggregate/TagId.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/tag/entity/TagId.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "usecase/CreatePlanUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/CreatePlanUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/CreatePlanService.java": {
+      "version": "1.1.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/CreatePlanService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": [
+        "Added comments to distinguish from CreateTaskService"
+      ]
+    },
+    "usecase/CreateTaskUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/CreateTaskUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/CreateTaskService.java": {
+      "version": "1.1.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/CreateTaskService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": [
+        "Added comments to distinguish from CreatePlanService"
+      ]
+    },
+    "usecase/DeleteTaskUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/DeleteTaskUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/DeleteTaskService.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/DeleteTaskService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/RenameTaskUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/RenameTaskUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/RenameTaskService.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/RenameTaskService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/AssignTagUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/AssignTagUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/AssignTagService.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/AssignTagService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/GetPlanUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/GetPlanUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/GetPlanService.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/GetPlanService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/GetTasksByDateUseCase.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/in/GetTasksByDateUseCase.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "usecase/GetTasksByDateService.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/service/GetTasksByDateService.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/PlanDtosProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/projection/PlanDtosProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/JpaPlanDtosProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/adapter/out/projection/JpaPlanDtosProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/TasksByDateProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/projection/TasksByDateProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/JpaTasksByDateProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/adapter/out/projection/JpaTasksByDateProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/TasksDueTodayProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/projection/TasksDueTodayProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/JpaTasksDueTodayProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/adapter/out/projection/JpaTasksDueTodayProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/TasksSortedByDeadlineProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/projection/TasksSortedByDeadlineProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/AllTagsProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/tag/usecase/port/out/projection/AllTagsProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "projection/JpaAllTagsProjection.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/tag/adapter/out/projection/JpaAllTagsProjection.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "mapper/PlanMapper.java": {
+      "version": "1.1.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/PlanMapper.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": [
+        "Updated to handle ProjectName value object"
+      ]
+    },
+    "mapper/TaskMapper.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/TaskMapper.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "controller/CreateTaskController.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/adapter/in/controller/rest/springboot/CreateTaskController.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "repository/GenericInMemoryRepository.java": {
+      "version": "1.0.0",
+      "source": "src/test/java/tw/teddysoft/ezddd/adapter/out/GenericInMemoryRepository.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "core",
+      "changes": []
+    },
+    "test/CreateTaskUseCaseTest.java": {
+      "version": "1.0.0",
+      "source": "src/test/java/tw/teddysoft/aiplan/plan/usecase/service/CreateTaskUseCaseTest.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "contract/aggregate-contract-example.md": {
+      "version": "1.0.0",
+      "source": "documentation",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "advanced",
+      "changes": []
+    },
+    "contract/usecase-contract-example.md": {
+      "version": "1.0.0",
+      "source": "documentation",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "advanced",
+      "changes": []
+    },
+    "contract/value-object-contract-example.md": {
+      "version": "1.0.0",
+      "source": "documentation",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "advanced",
+      "changes": []
+    },
+    "contract/ucontract-detailed-examples.md": {
+      "version": "1.0.0",
+      "source": "documentation",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "advanced",
+      "changes": []
+    },
+    "dto/PlanDto.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/PlanDto.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "dto/ProjectDto.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/ProjectDto.java",
+      "lastSync": "2025-08-05",
+      "status": "created",
+      "category": "patterns",
+      "changes": ["Initial template creation"]
+    },
+    "dto/TaskDto.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/TaskDto.java",
+      "lastSync": "2025-08-05",
+      "status": "created",
+      "category": "patterns",
+      "changes": ["Initial template creation with complex data types"]
+    },
+    "persistence/PlanData.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/PlanData.java",
+      "lastSync": "2025-08-05",
+      "status": "synced",
+      "category": "patterns",
+      "changes": []
+    },
+    "persistence/ProjectData.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/ProjectData.java",
+      "lastSync": "2025-08-05",
+      "status": "created",
+      "category": "patterns",
+      "changes": ["Initial template creation with OneToMany example"]
+    },
+    "persistence/TaskData.java": {
+      "version": "1.0.0",
+      "source": "src/main/java/tw/teddysoft/aiplan/plan/usecase/port/out/TaskData.java",
+      "lastSync": "2025-08-05",
+      "status": "created",
+      "category": "patterns",
+      "changes": ["Initial template creation with @ElementCollection example"]
+    }
+  }
+}

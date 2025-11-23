@@ -1,0 +1,1 @@
+generated/check-repository.sh

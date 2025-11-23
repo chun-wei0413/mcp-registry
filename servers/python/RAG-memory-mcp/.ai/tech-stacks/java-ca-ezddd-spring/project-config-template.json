@@ -1,0 +1,37 @@
+{
+  "projectName": "my-awesome-project",
+  "groupId": "com.example",
+  "artifactId": "my-awesome-project",
+  "version": "0.1.0-SNAPSHOT",
+  "packaging": "jar",
+  "rootPackage": "com.example.myproject",
+  "description": "描述你的專案目的和核心功能",
+  "techStack": "java-ca-ezddd-spring",
+  "javaVersion": "21",
+  "springBootVersion": "3.5.3",
+  "dependencies": {
+    "ezappStarterVersion": "1.0.0",
+    "ezspecVersion": "2.0.3",
+    "ucontractVersion": "2.0.0",
+    "junitVersion": "5.8.2",
+    "junitPlatformVersion": "1.8.2",
+    "mockitoVersion": "5.18.0",
+    "orgJsonVersion": "20240303",
+    "awaitilityVersion": "4.2.0",
+    "byteBuddyVersion": "1.15.10"
+  },
+  "mavenPlugins": {
+    "compilerPluginVersion": "3.10.1",
+    "surefirePluginVersion": "3.1.2"
+  },
+  "database": {
+    "production": "PostgreSQL",
+    "test": "Testcontainers"
+  },
+  "features": {
+    "eventSourcing": true,
+    "cqrs": true,
+    "restApi": true,
+    "swagger": false
+  }
+}

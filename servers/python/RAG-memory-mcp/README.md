@@ -122,15 +122,39 @@ retrieve_all_by_topic(topic="DDD")
 ## 📂 目錄結構
 
 ```
-servers/python/
-├── mcp_server.py          # FastMCP 伺服器主程式
-├── storage.py             # ChromaDB 向量儲存層
-├── requirements.txt       # Python 依賴
-├── Dockerfile             # Docker 映像定義
-├── docker-compose.yml     # Docker Compose 配置
-├── .dockerignore          # Docker 忽略檔案
-├── chroma_db/             # ChromaDB 持久化資料（自動建立）
-└── README.md              # 本文件
+servers/python/RAG-memory-mcp/
+├── 核心程式
+│   ├── app.py                  # FastAPI 應用主程式
+│   ├── mcp_server.py           # MCP 伺服器入口
+│   ├── controllers/            # MCP Tools 控制器
+│   ├── models/                 # 資料模型定義
+│   └── services/               # 業務邏輯服務
+│       ├── vector_store_service.py      # 向量存儲服務
+│       └── context_chunking_service.py  # 文檔切分服務
+│
+├── 資料目錄
+│   ├── chroma_db/              # ChromaDB 持久化資料（339 chunks）
+│   └── .ai/                    # AI 文檔知識庫（已 embedded）
+│
+├── 工具腳本
+│   └── scripts/
+│       ├── ingest_ai_docs.py   # 文檔 embedding 腳本
+│       ├── verify_ai_docs.py   # 資料驗證腳本
+│       ├── check_paths.py      # 路徑格式檢查
+│       └── README.md           # 腳本使用說明
+│
+├── 文檔
+│   └── docs/
+│       ├── ARCHITECTURE.md     # 系統架構說明
+│       ├── DOCKER.md           # Docker 部署指南
+│       ├── CHUNKING_STRATEGY.md # Chunking 策略文檔
+│       └── UPDATE_LOG.md       # 更新記錄
+│
+└── 配置檔案
+    ├── requirements.txt        # Python 依賴
+    ├── Dockerfile              # Docker 映像定義
+    ├── docker-compose.yml      # Docker Compose 配置
+    └── README.md               # 本文件
 ```
 
 ## 🔐 配置說明
@@ -279,12 +303,20 @@ docker-compose logs memory-mcp
 docker-compose build --no-cache
 ```
 
+## ✅ 已實現功能
+
+- [x] **智能 Chunking 策略** - 根據文件大小自動選擇切分策略（已處理 165 個文檔，生成 339 chunks）
+- [x] **跨平台相容** - 使用相對路徑和統一分隔符，支援 Windows/Linux/macOS
+- [x] **豐富元數據** - 包含分類、優先級、主題標籤等多維度資訊
+- [x] **完整文檔** - 詳細的架構說明、部署指南、Chunking 策略文檔
+
 ## 🚧 未來擴展
 
-- [ ] 支援 Chunking 策略（大文件分段）
-- [ ] 支援更多文件格式（PDF、DOCX）
+- [ ] 支援更多文件格式（PDF、DOCX、程式碼檔案）
+- [ ] 增量更新功能（只處理新增或修改的文件）
 - [ ] 新增 Prompt 優化功能
 - [ ] 整合 Claude CLI 配置檔
+- [ ] 多語言 Embedding 模型支援
 
 ## 📝 授權
 
