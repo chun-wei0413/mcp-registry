@@ -27,6 +27,7 @@ COPY mcp_server.py .
 COPY controllers/ ./controllers/
 COPY services/ ./services/
 COPY models/ ./models/
+COPY utils/ ./utils/
 
 # Create directory for persistent storage
 RUN mkdir -p /app/chroma_db
