@@ -66,27 +66,47 @@ Docker 基礎映像:
 
 ## 🚀 快速開始
 
+### 按平台選擇
+
+#### 🍎 macOS 用戶
+**推薦閱讀：** [macOS 快速開始指南](./docs/MACOS_QUICKSTART.md)
+
+包含三種啟動方式的詳細步驟、常見問題排查、以及性能優化建議。
+
+#### 其他平台
+
 ### 方式 1: Docker Compose 部署（推薦）
 
 ```bash
-# 1. 啟動服務
-cd servers/python
+# 1. 進入專案目錄
+cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+
+# 2. 啟動服務
 docker-compose up -d
 
-# 2. 查看日誌
-docker-compose logs -f memory-mcp
+# 3. 查看日誌
+docker-compose logs -f rag-memory-mcp
 
-# 3. 停止服務
+# 4. 停止服務
 docker-compose down
 ```
 
 ### 方式 2: 本地開發
 
 ```bash
-# 1. 安裝依賴
+# 1. 進入專案目錄
+cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+
+# 2. 建立虛擬環境
+python3 -m venv venv
+source venv/bin/activate  # macOS/Linux
+# 或
+venv\Scripts\activate  # Windows
+
+# 3. 安裝依賴
 pip install -r requirements.txt
 
-# 2. 啟動 MCP Server
+# 4. 啟動 MCP Server
 python mcp_server.py
 ```
 
@@ -188,6 +208,7 @@ servers/python/RAG-memory-mcp/
 │
 ├── 文檔
 │   └── docs/
+│       ├── MACOS_QUICKSTART.md # macOS 快速開始指南 [NEW]
 │       ├── ARCHITECTURE.md     # 系統架構說明
 │       ├── DOCKER.md           # Docker 部署指南
 │       ├── CHUNKING_STRATEGY.md # Chunking 策略文檔
