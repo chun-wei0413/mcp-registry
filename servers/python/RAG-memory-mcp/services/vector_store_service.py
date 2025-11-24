@@ -6,11 +6,9 @@ Handles embedding generation, storage, and retrieval using ChromaDB.
 import chromadb
 from sentence_transformers import SentenceTransformer
 import uuid
-import datetime
-import re
 import json
+from datetime import datetime
 from typing import List, Dict, Any, Optional
-from pathlib import Path
 from utils.markdown_parser import MarkdownParser
 
 
@@ -40,6 +38,38 @@ class VectorStoreService:
         self.model = SentenceTransformer(embedding_model)
         print(f"[OK] Loaded embedding model: {embedding_model}")
 
+    @staticmethod
+    def _format_result(doc_id: str, content: str, metadata: Dict[str, Any],
+                      similarity: float = None) -> Dict[str, Any]:
+        """Format a result dictionary from ChromaDB query."""
+        # Parse code_blocks from metadata if present
+        code_blocks = None
+        if "code_blocks" in metadata:
+            try:
+                code_blocks = json.loads(metadata["code_blocks"])
+            except json.JSONDecodeError:
+                pass
+
+        result = {
+            "id": doc_id,
+            "content": content,
+            "topic": metadata.get("topic"),
+            "timestamp": metadata.get("timestamp")
+        }
+
+        if similarity is not None:
+            result["similarity"] = similarity
+
+        # Add optional metadata fields
+        for field in ["file_path", "section_title", "chunk_type"]:
+            if field in metadata and metadata[field]:
+                result[field] = metadata[field]
+
+        if code_blocks:
+            result["code_blocks"] = code_blocks
+
+        return result
+
     def add_knowledge(self, topic: str, content: str) -> str:
         """
         Adds a new knowledge point to the vector store.
@@ -52,7 +82,7 @@ class VectorStoreService:
             str: The unique ID of the stored document.
         """
         doc_id = str(uuid.uuid4())
-        timestamp = datetime.datetime.utcnow().isoformat()
+        timestamp = datetime.utcnow().isoformat()
         embedding = self.model.encode(content).tolist()
 
         self.collection.add(
@@ -86,44 +116,18 @@ class VectorStoreService:
 
         results = self.collection.query(**query_params)
 
-        # Format the results
-        formatted_results = []
         if not results or not results["ids"][0]:
             return []
 
-        for i, doc_id in enumerate(results["ids"][0]):
-            metadata = results["metadatas"][0][i]
-
-            # Parse code_blocks from metadata if present
-            code_blocks = None
-            if "code_blocks" in metadata:
-                try:
-                    code_blocks = json.loads(metadata["code_blocks"])
-                except json.JSONDecodeError:
-                    code_blocks = None
-
-            result = {
-                "id": doc_id,
-                "content": results["documents"][0][i],
-                "topic": metadata.get("topic"),
-                "similarity": results["distances"][0][i],
-                "timestamp": metadata.get("timestamp")
-            }
-
-            # Add optional metadata
-            if metadata.get("file_path"):
-                result["file_path"] = metadata["file_path"]
-            if metadata.get("section_title"):
-                result["section_title"] = metadata["section_title"]
-            if metadata.get("chunk_type"):
-                result["chunk_type"] = metadata["chunk_type"]
-
-            # Add code blocks if present
-            if code_blocks:
-                result["code_blocks"] = code_blocks
-
-            formatted_results.append(result)
-
+        formatted_results = [
+            self._format_result(
+                doc_id=doc_id,
+                content=results["documents"][0][i],
+                metadata=results["metadatas"][0][i],
+                similarity=results["distances"][0][i]
+            )
+            for i, doc_id in enumerate(results["ids"][0])
+        ]
         return formatted_results
 
     def get_all_by_topic(self, topic: str) -> List[Dict[str, Any]]:
@@ -138,43 +142,17 @@ class VectorStoreService:
         """
         results = self.collection.get(where={"topic": topic})
 
-        # Format the results
-        formatted_results = []
         if not results or not results["ids"]:
             return []
 
-        for i, doc_id in enumerate(results["ids"]):
-            metadata = results["metadatas"][i]
-
-            # Parse code_blocks from metadata if present
-            code_blocks = None
-            if "code_blocks" in metadata:
-                try:
-                    code_blocks = json.loads(metadata["code_blocks"])
-                except json.JSONDecodeError:
-                    code_blocks = None
-
-            result = {
-                "id": doc_id,
-                "content": results["documents"][i],
-                "topic": metadata.get("topic"),
-                "timestamp": metadata.get("timestamp")
-            }
-
-            # Add optional metadata
-            if metadata.get("file_path"):
-                result["file_path"] = metadata["file_path"]
-            if metadata.get("section_title"):
-                result["section_title"] = metadata["section_title"]
-            if metadata.get("chunk_type"):
-                result["chunk_type"] = metadata["chunk_type"]
-
-            # Add code blocks if present
-            if code_blocks:
-                result["code_blocks"] = code_blocks
-
-            formatted_results.append(result)
-
+        formatted_results = [
+            self._format_result(
+                doc_id=doc_id,
+                content=results["documents"][i],
+                metadata=results["metadatas"][i]
+            )
+            for i, doc_id in enumerate(results["ids"])
+        ]
         return formatted_results
 
     def add_knowledge_with_chunking(self,

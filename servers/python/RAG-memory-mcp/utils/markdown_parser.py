@@ -22,6 +22,23 @@ class MarkdownParser:
         r'^\s*```(\w+)\s*\n(.*?)^\s*```\s*$',
         re.MULTILINE | re.DOTALL
     )
+    CODE_BLOCK_PLACEHOLDER_FORMAT = "[CODE_BLOCK_{}]"
+
+    @staticmethod
+    def _make_placeholder(position: int) -> str:
+        """Create a placeholder string for a code block."""
+        return MarkdownParser.CODE_BLOCK_PLACEHOLDER_FORMAT.format(position)
+
+    @staticmethod
+    def _create_chunk(description: str, code_blocks: List[Dict],
+                     section_title: str = None, is_complete: bool = True) -> Dict:
+        """Create a chunk dictionary with consistent structure."""
+        return {
+            'description': description.strip(),
+            'code_blocks': code_blocks,
+            'section_title': section_title,
+            'is_complete': is_complete
+        }
 
     @staticmethod
     def extract_code_blocks(content: str) -> Tuple[str, List[Dict[str, any]]]:
@@ -78,8 +95,7 @@ class MarkdownParser:
             })
 
             # Add placeholder
-            text_parts.append(f"[CODE_BLOCK_{position}]")
-
+            text_parts.append(MarkdownParser._make_placeholder(position))
             position += 1
             last_end = match.end()
 
@@ -113,7 +129,7 @@ class MarkdownParser:
             return ""
 
         # Find the placeholder for this code block
-        placeholder = f"[CODE_BLOCK_{code_block_index}]"
+        placeholder = MarkdownParser._make_placeholder(code_block_index)
         parts = text_only.split(placeholder)
 
         if len(parts) < 1:
@@ -124,7 +140,7 @@ class MarkdownParser:
 
         # If there's a previous code block, only take text after it
         if code_block_index > 0:
-            prev_placeholder = f"[CODE_BLOCK_{code_block_index - 1}]"
+            prev_placeholder = MarkdownParser._make_placeholder(code_block_index - 1)
             if prev_placeholder in description:
                 description = description.split(prev_placeholder)[-1].strip()
 
@@ -206,12 +222,12 @@ class MarkdownParser:
 
             if len(section_text) <= max_chunk_size:
                 # Section fits in one chunk
-                chunks.append({
-                    'description': full_description.strip(),
-                    'code_blocks': section_codes,
-                    'section_title': section_title,
-                    'is_complete': True
-                })
+                chunks.append(MarkdownParser._create_chunk(
+                    description=full_description,
+                    code_blocks=section_codes,
+                    section_title=section_title,
+                    is_complete=True
+                ))
             else:
                 # Need to split section into multiple chunks
                 # Split by paragraphs
@@ -227,12 +243,12 @@ class MarkdownParser:
                         # Save current chunk
                         chunk_desc = '\n\n'.join(current_chunk_text)
                         full_desc = f"## {section_title}\n\n{chunk_desc}"
-                        chunks.append({
-                            'description': full_desc.strip(),
-                            'code_blocks': current_chunk_codes,
-                            'section_title': section_title,
-                            'is_complete': False
-                        })
+                        chunks.append(MarkdownParser._create_chunk(
+                            description=full_desc,
+                            code_blocks=current_chunk_codes,
+                            section_title=section_title,
+                            is_complete=False
+                        ))
                         current_chunk_text = []
                         current_chunk_codes = []
                         current_size = 0
@@ -242,7 +258,7 @@ class MarkdownParser:
 
                     # Check if this paragraph has code block placeholders
                     for code_block in section_codes:
-                        placeholder = f"[CODE_BLOCK_{code_block['position']}]"
+                        placeholder = MarkdownParser._make_placeholder(code_block['position'])
                         if placeholder in para and code_block not in current_chunk_codes:
                             current_chunk_codes.append(code_block)
 
@@ -250,11 +266,11 @@ class MarkdownParser:
                 if current_chunk_text:
                     chunk_desc = '\n\n'.join(current_chunk_text)
                     full_desc = f"## {section_title}\n\n{chunk_desc}"
-                    chunks.append({
-                        'description': full_desc.strip(),
-                        'code_blocks': current_chunk_codes,
-                        'section_title': section_title,
-                        'is_complete': False
-                    })
+                    chunks.append(MarkdownParser._create_chunk(
+                        description=full_desc,
+                        code_blocks=current_chunk_codes,
+                        section_title=section_title,
+                        is_complete=False
+                    ))
 
         return chunks

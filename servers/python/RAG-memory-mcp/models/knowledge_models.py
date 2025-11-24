@@ -46,17 +46,6 @@ class RetrievalResult(BaseModel):
 
 # Request Models
 
-class IndexFolderRequest(BaseModel):
-    """Request for batch indexing a folder."""
-    source_dir: str = Field(..., description="Path to the directory to index")
-    chunk_size: int = Field(4000, description="Maximum characters per chunk")
-    chunk_overlap: int = Field(200, description="Overlap between chunks")
-    file_extensions: Optional[List[str]] = Field(
-        None,
-        description="File extensions to index (default: .md .txt .java .py .js .ts .sh .json .yaml .yml)"
-    )
-
-
 class IndexingStats(BaseModel):
     """Statistics from a batch indexing operation."""
     total_files: int
