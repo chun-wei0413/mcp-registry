@@ -33,4 +33,8 @@ if __name__ == "__main__":
     print("[*] Listening on 0.0.0.0:3031")
     print("[*] Press Ctrl+C to stop\n")
 
-    server.run(transport="sse")
+    try:
+        server.run(transport="sse")
+    except KeyboardInterrupt:
+        print("\n[*] Server stopped by user")
+        exit(0)
