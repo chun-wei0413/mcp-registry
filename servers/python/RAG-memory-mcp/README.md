@@ -405,6 +405,96 @@ docker-compose build --no-cache
 - [ ] 多語言 Embedding 模型支援
 - [ ] 程式碼語意搜尋（基於 AST 或 Code Embeddings）
 
+## 📚 完整文檔導覽
+
+### 🎯 按用途選擇文件
+
+#### 想快速開始？
+- **[macOS 快速開始指南](./docs/MACOS_QUICKSTART.md)** - 三種啟動方式，5 分鐘上手
+- **[README.md](./README.md)** - 本文件，功能概述和基本用法
+
+#### 想深入了解系統？
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - 系統整體架構設計
+- **[CODE_SEPARATION.md](./docs/CODE_SEPARATION.md)** - v2.0 智能程式碼分離技術細節
+- **[CHUNKING_STRATEGY.md](./docs/CHUNKING_STRATEGY.md)** - 智能分塊策略
+
+#### 想查詢具體 API？
+- **[MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md)** - 伺服器配置和工具詳解
+- **[QUERY_GUIDE.md](./QUERY_GUIDE.md)** - 查詢格式和使用範例
+
+#### 想查詢部署相關？
+- **[DOCKER.md](./docs/DOCKER.md)** - Docker 部署指南
+- **[Dockerfile](./Dockerfile)** - Docker 映像配置
+
+#### 想了解代碼結構？
+- **[controllers/README.md](./controllers/README.md)** - MCP Tools 控制層
+- **[services/README.md](./services/README.md)** - 業務邏輯服務層
+- **[models/README.md](./models/README.md)** - 資料模型定義
+- **[utils/README.md](./utils/README.md)** - 工具模組說明
+- **[tests/README.md](./tests/README.md)** - 測試套件說明
+- **[scripts/README.md](./scripts/README.md)** - 工具腳本說明
+
+#### 想瞭解版本更新？
+- **[CHANGELOG.md](./CHANGELOG.md)** - 版本變更記錄
+- **[UPDATE_LOG.md](./docs/UPDATE_LOG.md)** - 詳細更新日誌
+
+#### 想快速索引命令？
+- **[INGEST_GUIDE.md](./INGEST_GUIDE.md)** - Ingest 文檔快速指南
+
+### 📋 全部文件清單
+
+#### 核心文檔
+| 文件 | 描述 | 用途 |
+|------|------|------|
+| [README.md](./README.md) | 專案概述 | 快速瞭解專案 |
+| [MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md) | 伺服器配置指南 | 配置和調整 |
+| [QUERY_GUIDE.md](./QUERY_GUIDE.md) | 查詢使用指南 | 學習如何查詢 |
+| [INGEST_GUIDE.md](./INGEST_GUIDE.md) | Ingest 指南 | 快速開始 ingest |
+| [CHANGELOG.md](./CHANGELOG.md) | 版本記錄 | 追蹤更新 |
+
+#### 技術文檔 (docs/)
+| 文件 | 描述 | 用途 |
+|------|------|------|
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 系統架構 | 深入瞭解設計 |
+| [CODE_SEPARATION.md](./docs/CODE_SEPARATION.md) | 程式碼分離技術 | v2.0 核心特性 |
+| [CHUNKING_STRATEGY.md](./docs/CHUNKING_STRATEGY.md) | 分塊策略 | 最佳化索引 |
+| [DOCKER.md](./docs/DOCKER.md) | Docker 部署 | 容器化部署 |
+| [MACOS_QUICKSTART.md](./docs/MACOS_QUICKSTART.md) | macOS 快速開始 | macOS 用戶 |
+| [UPDATE_LOG.md](./docs/UPDATE_LOG.md) | 更新日誌 | 詳細更新記錄 |
+
+#### 代碼目錄說明
+| 目錄 | README | 說明 |
+|------|--------|------|
+| [controllers/](./controllers/) | [README.md](./controllers/README.md) | MCP 工具入口 |
+| [services/](./services/) | [README.md](./services/README.md) | 業務邏輯層 |
+| [models/](./models/) | [README.md](./models/README.md) | 資料模型定義 |
+| [utils/](./utils/) | [README.md](./utils/README.md) | 工具函數 |
+| [tests/](./tests/) | [README.md](./tests/README.md) | 測試套件 |
+| [scripts/](./scripts/) | [README.md](./scripts/README.md) | 工具腳本 |
+
+### 🎓 學習路徑建議
+
+**新用戶（5-10 分鐘）：**
+1. 閱讀本文件的「功能特性」和「新功能亮點」
+2. 選擇快速開始方式（Docker 或本地開發）
+3. 嘗試第一個查詢
+
+**開發者（30 分鐘）：**
+1. 閱讀 [MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md) 瞭解 API
+2. 閱讀 [QUERY_GUIDE.md](./QUERY_GUIDE.md) 學習查詢格式
+3. 閱讀 [CODE_SEPARATION.md](./docs/CODE_SEPARATION.md) 瞭解 v2.0 特性
+
+**維護者（1 小時）：**
+1. 閱讀 [ARCHITECTURE.md](./docs/ARCHITECTURE.md) 瞭解整體設計
+2. 閱讀各個代碼目錄的 README
+3. 閱讀 [CHUNKING_STRATEGY.md](./docs/CHUNKING_STRATEGY.md) 瞭解最佳化策略
+4. 運行 [tests/README.md](./tests/README.md) 中的測試
+
+**Docker 部署者（15 分鐘）：**
+1. 查看 [DOCKER.md](./docs/DOCKER.md)
+2. 執行 docker-compose 命令
+3. 查看 [MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md) 配置環境變數
+
 ## 📝 授權
 
 此專案為 MCP Registry 的一部分，遵循專案主授權協議。
