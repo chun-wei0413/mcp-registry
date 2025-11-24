@@ -93,6 +93,13 @@ docker-compose down
 
 ### 方式 2: 本地開發
 
+#### 快速方式（推薦 macOS）
+```bash
+cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+bash start.sh
+```
+
+#### 手動方式
 ```bash
 # 1. 進入專案目錄
 cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
@@ -215,12 +222,16 @@ servers/python/RAG-memory-mcp/
 │       ├── CODE_SEPARATION.md  # 程式碼分離策略文檔 [NEW]
 │       └── UPDATE_LOG.md       # 更新記錄
 │
-└── 配置檔案
-    ├── requirements.txt        # Python 依賴
-    ├── Dockerfile              # Docker 映像定義
-    ├── docker-compose.yml      # Docker Compose 配置
-    ├── CHANGELOG.md            # 版本變更記錄 [NEW]
-    └── README.md               # 本文件
+├── 配置與啟動
+│   ├── start.sh               # macOS 一鍵啟動腳本 [NEW]
+│   ├── requirements.txt        # Python 依賴
+│   ├── Dockerfile              # Docker 映像定義
+│   ├── docker-compose.yml      # Docker Compose 配置
+│   ├── CHANGELOG.md            # 版本變更記錄
+│   └── README.md               # 本文件
+│
+└── 虛擬環境
+    └── venv/                   # Python 虛擬環境（自動建立）
 ```
 
 ## 🔐 配置說明
