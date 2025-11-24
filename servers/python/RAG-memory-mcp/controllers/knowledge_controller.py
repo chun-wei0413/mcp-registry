@@ -18,7 +18,7 @@ def register_knowledge_tools(server, vector_store: VectorStoreService):
     """
 
     @server.tool()
-    def search_knowledge(query: str, top_k: int = 50, topic: Optional[str] = None) -> SearchResult:
+    def search_knowledge(query: str, top_k: int = 20, topic: Optional[str] = None) -> SearchResult:
         """
         Performs a semantic search for knowledge.
 
