@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 import hashlib
 
 import sys
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from services.vector_store_service import VectorStoreService
 
@@ -346,8 +346,9 @@ def main():
 
     # 設定路徑
     script_dir = Path(__file__).parent
-    ai_docs_dir = script_dir / '.ai'
-    chroma_db_dir = script_dir / 'chroma_db'
+    project_root = script_dir.parent
+    ai_docs_dir = project_root / '.ai'
+    chroma_db_dir = project_root / 'chroma_db'
 
     print(f"AI 文檔目錄: {ai_docs_dir}")
     print(f"ChromaDB 目錄: {chroma_db_dir}")

@@ -3,11 +3,13 @@
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
+script_dir = Path(__file__).parent
+project_root = script_dir.parent
+sys.path.insert(0, str(project_root))
 
 from services.vector_store_service import VectorStoreService
 
-vs = VectorStoreService(db_path='chroma_db', collection_name='ai_documentation')
+vs = VectorStoreService(db_path=str(project_root / 'chroma_db'), collection_name='ai_documentation')
 print(f'Total Chunks: {vs.collection.count()}')
 
 # 獲取所有資料

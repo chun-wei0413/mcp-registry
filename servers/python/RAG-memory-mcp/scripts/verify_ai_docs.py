@@ -6,14 +6,15 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from services.vector_store_service import VectorStoreService
 
 
 def main():
     script_dir = Path(__file__).parent
-    chroma_db_dir = script_dir / 'chroma_db'
+    project_root = script_dir.parent
+    chroma_db_dir = project_root / 'chroma_db'
 
     print("="*80)
     print("ChromaDB 資料驗證".center(80))
