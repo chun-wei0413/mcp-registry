@@ -1,1 +1,0 @@
-generated/check-mapper.sh

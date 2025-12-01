@@ -1,6 +1,0 @@
-# 忽略 Docker volume 資料 (檔案很大,不要提交到 Git)
-ollama/
-qdrant/
-
-# 但保留這個目錄結構
-!.gitignore

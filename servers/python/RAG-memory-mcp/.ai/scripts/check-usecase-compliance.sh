@@ -1,1 +1,0 @@
-generated/check-usecase.sh
