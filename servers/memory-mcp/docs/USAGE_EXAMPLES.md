@@ -1,12 +1,69 @@
-# Memory MCP Server 使用範例
+# Memory MCP Server 使用指南
 
-本文件提供 Memory MCP Server v2.0 的實際使用範例，展示智能程式碼分離功能的應用。
+本文件提供 Memory MCP Server v2.0 的完整使用指南，包括資料 Ingest、查詢搜尋和實際範例。
 
 ## 目錄
+- [快速開始](#快速開始)
 - [基本使用](#基本使用)
-- [智能程式碼分離範例](#智能程式碼分離範例)
 - [進階查詢](#進階查詢)
+- [Collections 選擇](#collections-選擇)
+- [實用範例](#實用範例)
 - [整合到工作流程](#整合到工作流程)
+- [性能最佳化](#性能最佳化)
+- [故障排除](#故障排除)
+
+---
+
+## 快速開始
+
+### 1️⃣ 初次 Ingest（已執行 ✅）
+
+將所有 `.ai` 目錄下的 Markdown 文件轉換為向量 embeddings 並存入 ChromaDB：
+
+```bash
+# 在專案根目錄執行
+python3 scripts/ingest_ai_docs_v2.py
+```
+
+**做什麼：**
+- 讀取 `.ai/` 目錄中的所有 `.md` 文件
+- 分離程式碼與文字（智能程式碼分離）
+- 按 Markdown 標題進行語義分割
+- 計算文字的 embeddings（程式碼不參與）
+- 將程式碼保留在元數據中
+- 存入 ChromaDB
+
+**輸出示例：**
+```
+================================================================================
+                    開始處理 .ai 目錄文檔 (v2.0 - 智能程式碼分離)
+================================================================================
+...
+[OK] INDEX.md: 8 chunks
+[OK] README.md: 8 chunks
+[OK] SUB-AGENT-SYSTEM.md: 13 chunks
+...
+================================================================================
+                                  處理完成統計
+================================================================================
+總文件數: 165
+總 Chunks: 1,116
+```
+
+### 2️⃣ 驗證結果
+
+檢查 embedding 質量和搜尋功能：
+
+```bash
+python3 scripts/verify_ai_docs_v2.py
+```
+
+**驗證項目：**
+- ✅ 集合統計（文檔數、分佈）
+- ✅ 元數據驗證（完整性、遺漏欄位）
+- ✅ 程式碼分離驗證（代碼塊計數、覆蓋率）
+- ✅ 搜尋功能驗證（查詢結果）
+- ✅ 性能分析（embedding 大小、速度）
 
 ---
 
@@ -73,45 +130,238 @@ Embedding 大小減少：約 55-60%
 
 ### 2. 語意搜尋
 
-```python
-# 查詢 Aggregate 相關知識
-results = search_knowledge(
-    query="如何正確修改 Aggregate 內部狀態",
-    top_k=3,
-    topic="DDD"  # 可選：限定主題
-)
-```
+最推薦的方式 - 直接使用 VectorStoreService：
 
-**返回結果：**
-```json
-{
-  "results": [
-    {
-      "id": "abc-123",
-      "content": "# Aggregate 實作指南\n\n...\n\n[CODE_BLOCK_0]\n\n...",
-      "topic": "DDD",
-      "similarity": 0.91,
-      "timestamp": "2025-11-23T10:30:00Z",
-      "code_blocks": [
-        {
-          "language": "java",
-          "code": "public class Order {\n    private OrderId id;\n    private List<OrderItem> items;\n\n    public void addItem(OrderItem item) {\n        this.items.add(item);\n        apply(new ItemAdded(this.id, item));\n    }\n}",
-          "position": 0
-        },
-        {
-          "language": "java",
-          "code": "// 正確：透過聚合根修改\norder.addItem(newItem);\n\n// 錯誤：直接修改內部狀態\norder.getItems().add(newItem);  // 不要這樣做！",
-          "position": 1
-        }
-      ]
-    }
-  ]
-}
+```python
+from services.vector_store_service import VectorStoreService
+
+# 初始化
+vs = VectorStoreService(
+    db_path="./chroma_db",
+    collection_name="ai_documentation"  # ⭐ 主要文檔索引
+)
+
+# 基本搜尋
+results = vs.search_knowledge(
+    query="aggregate",
+    top_k=5
+)
+
+# 處理結果
+for result in results:
+    print(f"主題: {result['topic']}")
+    print(f"相似度: {result['similarity']:.4f}")
+    print(f"內容: {result['content'][:200]}...")
+    print(f"來源: {result.get('file_path', 'N/A')}")
+
+    # 獲取代碼塊
+    if result.get('code_blocks'):
+        for code in result['code_blocks']:
+            print(f"\n代碼 ({code['language']}):")
+            print(code['code'])
+    print("\n" + "="*80)
 ```
 
 ---
 
-## 智能程式碼分離範例
+## 進階查詢
+
+### 1️⃣ 通過 Python 直接查詢
+
+最推薦的方式 - 直接使用 VectorStoreService：
+
+```python
+from services.vector_store_service import VectorStoreService
+
+# 初始化
+vs = VectorStoreService(
+    db_path="./chroma_db",
+    collection_name="ai_documentation"  # ⭐ 主要文檔索引
+)
+
+# 基本搜尋
+results = vs.search_knowledge(
+    query="aggregate",
+    top_k=5
+)
+
+# 處理結果
+for result in results:
+    print(f"主題: {result['topic']}")
+    print(f"相似度: {result['similarity']:.4f}")
+    print(f"內容: {result['content'][:200]}...")
+    print(f"來源: {result.get('file_path', 'N/A')}")
+
+    # 獲取代碼塊
+    if result.get('code_blocks'):
+        for code in result['code_blocks']:
+            print(f"\n代碼 ({code['language']}):")
+            print(code['code'])
+    print("\n" + "="*80)
+```
+
+### 2️⃣ 按優先級搜尋
+
+只搜尋 Critical 和 High 優先級的文檔：
+
+```python
+from services.vector_store_service import VectorStoreService
+
+vs = VectorStoreService(db_path="./chroma_db", collection_name="ai_documentation")
+
+# 獲取所有文檔
+all_docs = vs.collection.get()
+
+# 過濾優先級
+high_priority_docs = [
+    (all_docs['ids'][i], all_docs['documents'][i], all_docs['metadatas'][i])
+    for i in range(len(all_docs['ids']))
+    if all_docs['metadatas'][i].get('priority') in ['critical', 'high']
+]
+
+print(f"高優先級文檔: {len(high_priority_docs)}")
+
+# 在高優先級文檔中搜尋
+query_embedding = vs.model.encode("aggregate").tolist()
+results = vs.collection.query(
+    query_embeddings=[query_embedding],
+    n_results=5,
+    where={"priority": {"$in": ["critical", "high"]}}
+)
+```
+
+### 3️⃣ 按分類搜尋
+
+只搜尋某個分類的文檔：
+
+```python
+vs = VectorStoreService(db_path="./chroma_db", collection_name="ai_documentation")
+
+# 搜尋提示語（prompts）分類
+results = vs.search_knowledge(
+    query="如何寫測試?",
+    top_k=5
+)
+
+# 過濾結果
+prompt_results = [
+    r for r in results
+    if 'prompts' in r['topic'].lower()
+]
+
+for result in prompt_results:
+    print(f"{result['topic']}: {result['content'][:150]}...")
+```
+
+### 4️⃣ 按主題搜尋
+
+利用元數據中的 topics 欄位：
+
+```python
+vs = VectorStoreService(db_path="./chroma_db", collection_name="ai_documentation")
+
+# 搜尋包含特定主題的文檔
+results = vs.search_knowledge("testing", top_k=5)
+
+# 過濾包含 "testing" 主題的結果
+testing_results = [
+    r for r in results
+    if 'testing' in r.get('topic', '').lower()
+]
+
+for result in testing_results:
+    print(f"主題: {result['topic']}")
+    print(f"內容: {result['content'][:100]}...")
+```
+
+### 5️⃣ 獲取特定類別的所有文檔
+
+```python
+vs = VectorStoreService(db_path="./chroma_db", collection_name="ai_documentation")
+
+# 獲取所有文檔
+all_docs = vs.collection.get()
+
+# 按分類分組
+from collections import defaultdict
+by_category = defaultdict(list)
+
+for i, doc_id in enumerate(all_docs['ids']):
+    category = all_docs['metadatas'][i].get('category', 'unknown')
+    by_category[category].append({
+        'id': doc_id,
+        'content': all_docs['documents'][i][:100],
+        'source': all_docs['metadatas'][i].get('source_file')
+    })
+
+# 顯示聚合文檔
+print(f"Aggregate 相關文檔:")
+for doc in by_category.get('examples', []):
+    if 'aggregate' in doc['source'].lower():
+        print(f"  - {doc['source']}")
+```
+
+### 6️⃣ ChromaDB 直接 API 查詢
+
+如果你想完全掌控查詢邏輯：
+
+```python
+import chromadb
+from sentence_transformers import SentenceTransformer
+
+# 連接到 ChromaDB
+client = chromadb.PersistentClient(path="./chroma_db")
+collection = client.get_collection(name="ai_documentation")
+
+# 加載模型
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# 查詢
+query = "aggregate"
+query_embedding = model.encode(query).tolist()
+
+results = collection.query(
+    query_embeddings=[query_embedding],
+    n_results=5,
+    include=["documents", "metadatas", "distances"]
+)
+
+# 處理結果
+for i, doc_id in enumerate(results['ids'][0]):
+    doc = results['documents'][0][i]
+    meta = results['metadatas'][0][i]
+    distance = results['distances'][0][i]
+
+    print(f"{i+1}. Distance: {distance:.4f}")
+    print(f"   Category: {meta['category']}")
+    print(f"   Content: {doc[:100]}...")
+    print()
+```
+
+---
+
+## Collections 選擇
+
+### 何時使用 `ai_documentation`
+
+✅ **推薦用於：**
+- 搜尋 .ai 目錄的文檔
+- 獲取編碼標準和最佳實踐
+- 查找提示語和範例
+- 獲取完整的代碼片段
+
+```python
+vs = VectorStoreService(
+    db_path="./chroma_db",
+    collection_name="ai_documentation"  # ⭐ 1,116 chunks
+)
+```
+
+---
+
+## 實用範例
+
+### 智能程式碼分離範例
 
 ### 範例 1：Event Sourcing 教學文件
 

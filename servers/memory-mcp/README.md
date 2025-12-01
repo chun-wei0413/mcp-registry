@@ -419,8 +419,8 @@ docker-compose build --no-cache
 - **[CHUNKING_STRATEGY.md](./docs/CHUNKING_STRATEGY.md)** - 智能分塊策略
 
 #### 想查詢具體 API？
-- **[MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md)** - 伺服器配置和工具詳解
-- **[QUERY_GUIDE.md](./QUERY_GUIDE.md)** - 查詢格式和使用範例
+- **[API_REFERENCE.md](./docs/API_REFERENCE.md)** - MCP 伺服器配置和工具詳解
+- **[使用指南](./docs/USAGE_EXAMPLES.md)** - 完整的 Ingest、查詢和使用範例
 
 #### 想查詢部署相關？
 - **[DOCKER.md](./docs/DOCKER.md)** - Docker 部署指南
@@ -435,22 +435,18 @@ docker-compose build --no-cache
 - **[scripts/README.md](./scripts/README.md)** - 工具腳本說明
 
 #### 想瞭解版本更新？
-- **[CHANGELOG.md](./CHANGELOG.md)** - 版本變更記錄
+- **[CHANGELOG.md](./docs/CHANGELOG.md)** - 版本變更記錄
 - **[UPDATE_LOG.md](./docs/UPDATE_LOG.md)** - 詳細更新日誌
 
 #### 想快速索引命令？
-- **[INGEST_GUIDE.md](./INGEST_GUIDE.md)** - Ingest 文檔快速指南
+- **[USAGE_EXAMPLES.md](./docs/USAGE_EXAMPLES.md)** - Ingest、查詢和完整範例指南
 
 ### 📋 全部文件清單
 
-#### 核心文檔
+#### 根目錄文檔
 | 文件 | 描述 | 用途 |
 |------|------|------|
 | [README.md](./README.md) | 專案概述 | 快速瞭解專案 |
-| [MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md) | 伺服器配置指南 | 配置和調整 |
-| [QUERY_GUIDE.md](./QUERY_GUIDE.md) | 查詢使用指南 | 學習如何查詢 |
-| [INGEST_GUIDE.md](./INGEST_GUIDE.md) | Ingest 指南 | 快速開始 ingest |
-| [CHANGELOG.md](./CHANGELOG.md) | 版本記錄 | 追蹤更新 |
 
 #### 技術文檔 (docs/)
 | 文件 | 描述 | 用途 |
@@ -480,8 +476,8 @@ docker-compose build --no-cache
 3. 嘗試第一個查詢
 
 **開發者（30 分鐘）：**
-1. 閱讀 [MCP_SERVER_CONFIG.md](./MCP_SERVER_CONFIG.md) 瞭解 API
-2. 閱讀 [QUERY_GUIDE.md](./QUERY_GUIDE.md) 學習查詢格式
+1. 閱讀 [API_REFERENCE.md](./docs/API_REFERENCE.md) 瞭解 MCP 工具 API
+2. 閱讀 [USAGE_EXAMPLES.md](./docs/USAGE_EXAMPLES.md) 學習 Ingest 和查詢
 3. 閱讀 [CODE_SEPARATION.md](./docs/CODE_SEPARATION.md) 瞭解 v2.0 特性
 
 **維護者（1 小時）：**

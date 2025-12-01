@@ -36,8 +36,8 @@ application-*.properties
 .vscode/
 .idea
 
-# ChromaDB
-chroma_db/
+# ChromaDB - Allow tracking of chroma_db for development/testing
+# chroma_db/  (uncomment if you want to ignore)
 *.iws
 *.iml
 *.ipr
