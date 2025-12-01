@@ -36,8 +36,8 @@ application-*.properties
 .vscode/
 .idea
 
-# ChromaDB - Allow tracking of chroma_db for development/testing
-# chroma_db/  (uncomment if you want to ignore)
+# ChromaDB - Ignore vector database (regenerated on each run)
+servers/memory-mcp/chroma_db/
 *.iws
 *.iml
 *.ipr
