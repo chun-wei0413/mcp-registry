@@ -38,6 +38,19 @@ application-*.properties
 
 # ChromaDB - Ignore vector database (regenerated on each run)
 servers/memory-mcp/chroma_db/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Temporary and cache files
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
 *.iws
 *.iml
 *.ipr
