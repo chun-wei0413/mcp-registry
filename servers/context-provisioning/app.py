@@ -12,8 +12,6 @@ from services.context_chunking_service import ContextChunkingService
 
 # Controllers
 from controllers.knowledge_controller import register_knowledge_tools
-from controllers.document_controller import register_document_tools
-from controllers.indexing_controller import register_indexing_tools
 from controllers.resource_controller import register_resources
 
 
@@ -107,14 +105,6 @@ def create_app(
     # Register knowledge tools: search_knowledge, learn_knowledge
     register_knowledge_tools(server, vector_store)
     print(f"    - Knowledge tools registered")
-
-    # Register document tools: store_document
-    register_document_tools(server, vector_store)
-    print(f"    - Document tools registered")
-
-    # Register indexing tools: batch_index_folder (context chunking)
-    register_indexing_tools(server, context_chunking)
-    print(f"    - Indexing tools registered")
 
     # Register resources: knowledge://{topic}
     register_resources(server, vector_store)
