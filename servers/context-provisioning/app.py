@@ -45,7 +45,7 @@ def create_app(
                         Options:
                         - ai_documentation (1,116 chunks - RAG index for .ai directory) ⭐ RECOMMENDED
                         - mcp_knowledge_base (for manual knowledge points)
-        EMBEDDING_MODEL: Model name (default: paraphrase-multilingual-MiniLM-L12-v2)
+        EMBEDDING_MODEL: Model name (default: google/embeddinggemma-300m)
         MCP_SERVER_HOST: Server host (default: 0.0.0.0)
         MCP_SERVER_PORT: Server port (default: 3031)
 
@@ -59,7 +59,7 @@ def create_app(
     # Read from environment variables with defaults
     db_path = db_path or os.getenv("CHROMA_DB_PATH", "./chroma_db")
     collection_name = collection_name or os.getenv("COLLECTION_NAME", "ai_documentation")
-    embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2")
+    embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "google/embeddinggemma-300m")
     host = host or os.getenv("MCP_SERVER_HOST", "0.0.0.0")
     port = port or int(os.getenv("MCP_SERVER_PORT", "3031"))
 

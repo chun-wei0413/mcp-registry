@@ -14,7 +14,7 @@ cd servers/python/RAG-context-provisioning
 [*] Initializing services...
     - Database: ./chroma_db
     - Collection: ai_documentation
-    - Embedding model: paraphrase-multilingual-MiniLM-L12-v2
+    - Embedding model: google/embeddinggemma-300m
 [OK] Services initialized
 
 [*] Creating MCP Server...
@@ -44,7 +44,7 @@ cd servers/python/RAG-context-provisioning
 # 配置詳情：
 # - Database: ./chroma_db
 # - Collection: ai_documentation  ⭐ (1,116 chunks)
-# - Model: paraphrase-multilingual-MiniLM-L12-v2
+# - Model: google/embeddinggemma-300m
 # - Host: 0.0.0.0
 # - Port: 3031
 ```
@@ -73,7 +73,7 @@ MCP_SERVER_HOST=127.0.0.1 \
 |---------|--------|------|
 | `CHROMA_DB_PATH` | `./chroma_db` | ChromaDB 數據庫路徑 |
 | `COLLECTION_NAME` | `ai_documentation` | ChromaDB collection 名稱 |
-| `EMBEDDING_MODEL` | `paraphrase-multilingual-MiniLM-L12-v2` | SentenceTransformer 模型 |
+| `EMBEDDING_MODEL` | `google/embeddinggemma-300m` | SentenceTransformer 模型 |
 | `MCP_SERVER_HOST` | `0.0.0.0` | MCP server 監聽地址 |
 | `MCP_SERVER_PORT` | `3031` | MCP server 監聽埠號 |
 

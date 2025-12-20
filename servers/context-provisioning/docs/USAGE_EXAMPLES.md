@@ -314,7 +314,7 @@ client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_collection(name="ai_documentation")
 
 # 加載模型
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("google/embeddinggemma-300m")
 
 # 查詢
 query = "aggregate"

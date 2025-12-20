@@ -55,7 +55,7 @@
 ```yaml
 核心技術:
   - MCP SDK: FastMCP (Anthropic 官方 Python SDK)
-  - Embedding 模型: all-MiniLM-L6-v2 (80MB, 本地運行, 384 維度)
+  - Embedding 模型: google/embeddinggemma-300m (600MB, 本地運行, 768 維度)
   - 向量資料庫: ChromaDB (內嵌式, 零配置, Cosine Similarity)
   - 文件處理: Python 標準庫
   - 資料驗證: Pydantic
@@ -91,7 +91,7 @@ Docker 基礎映像:
 │  VectorStore (storage.py)   │
 │  ┌─────────────────────┐   │
 │  │ SentenceTransformer │   │
-│  │ (all-MiniLM-L6-v2)  │   │
+│  │ (google/embeddinggemma-300m)  │   │
 │  └──────────┬──────────┘   │
 │             │               │
 │  ┌──────────▼──────────┐   │

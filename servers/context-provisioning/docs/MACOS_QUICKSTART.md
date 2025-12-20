@@ -31,7 +31,7 @@ docker-compose up -d
 **第一次啟動會發生什麼：**
 - ✅ 下載 Python 3.11-slim 基礎映像（~50MB）
 - ✅ 安裝 Python 依賴（包括 sentence-transformers）
-- ✅ 下載 Embedding 模型（~120MB）
+- ✅ 下載 Embedding 模型（~600MB）
 - ✅ 初始化 ChromaDB
 - ⏳ 預計耗時：5-10 分鐘（取決於網速）
 
@@ -177,7 +177,7 @@ docker run -d \
   --name rag-context-provisioning-server \
   -p 3031:3031 \
   -v $(pwd)/chroma_db:/app/chroma_db \
-  -e EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2 \
+  -e EMBEDDING_MODEL=google/embeddinggemma-300m \
   rag-context-provisioning
 ```
 
@@ -298,7 +298,7 @@ RAG-context-provisioning/
 environment:
   - MCP_SERVER_NAME=RAG Context Provisioning Server
   - CHROMA_DB_PATH=/app/chroma_db
-  - EMBEDDING_MODEL=all-MiniLM-L6-v2  # 改為快速模型
+  - EMBEDDING_MODEL=google/embeddinggemma-300m  # 改為快速模型
   - PYTHONUNBUFFERED=1
 ```
 
@@ -308,12 +308,12 @@ environment:
 
 ```bash
 # Bash / Zsh
-export EMBEDDING_MODEL=all-MiniLM-L6-v2
+export EMBEDDING_MODEL=google/embeddinggemma-300m
 export CHROMA_DB_PATH=./chroma_db
 python mcp_server.py
 
 # 或一行設定
-EMBEDDING_MODEL=all-MiniLM-L6-v2 python mcp_server.py
+EMBEDDING_MODEL=google/embeddinggemma-300m python mcp_server.py
 ```
 
 ---
@@ -325,7 +325,7 @@ EMBEDDING_MODEL=all-MiniLM-L6-v2 python mcp_server.py
 1. **使用更小的 Embedding 模型**
    ```yaml
    # 在 docker-compose.yml 或環境變數設定
-   EMBEDDING_MODEL=all-MiniLM-L6-v2
+   EMBEDDING_MODEL=google/embeddinggemma-300m
    ```
    節省 40MB 下載和初始化時間
 
@@ -445,13 +445,13 @@ python mcp_server.py
 ### 自訂 Embedding 模型
 
 支援的模型列表：
-- `all-MiniLM-L6-v2`（推薦，80MB，快速）
-- `paraphrase-multilingual-MiniLM-L12-v2`（120MB，多語言）
+- `google/embeddinggemma-300m`（推薦，600MB，快速）
+- `google/embeddinggemma-300m`（600MB，多語言）
 - `all-mpnet-base-v2`（430MB，準確但慢）
 
 ```bash
 # 設定不同模型
-export EMBEDDING_MODEL=all-MiniLM-L6-v2
+export EMBEDDING_MODEL=google/embeddinggemma-300m
 python mcp_server.py
 ```
 

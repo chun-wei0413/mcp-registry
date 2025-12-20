@@ -33,7 +33,7 @@ docker run -d \
   --name rag-context-provisioning \
   -p 3031:3031 \
   -v $(pwd)/chroma_db:/app/chroma_db \
-  -e EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2 \
+  -e EMBEDDING_MODEL=google/embeddinggemma-300m \
   rag-context-provisioning
 
 # 3. 查看日誌
@@ -58,7 +58,7 @@ docker rm rag-context-provisioning
 
 | 環境變數 | 預設值 | 說明 |
 |---------|--------|------|
-| `EMBEDDING_MODEL` | `paraphrase-multilingual-MiniLM-L12-v2` | Embedding 模型名稱 |
+| `EMBEDDING_MODEL` | `google/embeddinggemma-300m` | Embedding 模型名稱 |
 | `COLLECTION_NAME` | `mcp_knowledge_base` | ChromaDB 集合名稱 |
 | `MCP_SERVER_HOST` | `0.0.0.0` | Server 監聽位址 |
 | `MCP_SERVER_PORT` | `3031` | Server 監聽埠 |
@@ -69,7 +69,7 @@ docker rm rag-context-provisioning
 # docker-compose.yml
 environment:
   # 使用較快的英文模型
-  - EMBEDDING_MODEL=all-MiniLM-L6-v2
+  - EMBEDDING_MODEL=google/embeddinggemma-300m
 
   # 自訂資料庫路徑
   - CHROMA_DB_PATH=/data/vector_db
@@ -149,7 +149,7 @@ deploy:
 
 | 場景 | CPU | 記憶體 | 說明 |
 |------|-----|--------|------|
-| **開發測試** | 1 核 | 512MB | 使用 `all-MiniLM-L6-v2` 模型 |
+| **開發測試** | 1 核 | 512MB | 使用 `google/embeddinggemma-300m` 模型 |
 | **小型生產** | 2 核 | 1GB | 使用多語言模型，少量檔案 |
 | **中型生產** | 2 核 | 2GB | 推薦配置，處理數百個檔案 |
 | **大型生產** | 4 核 | 4GB | 處理數千個檔案，高併發 |
@@ -197,13 +197,13 @@ networks:
 **方式 1：修改 docker-compose.yml**
 ```yaml
 environment:
-  - EMBEDDING_MODEL=all-MiniLM-L6-v2
+  - EMBEDDING_MODEL=google/embeddinggemma-300m
 ```
 
 **方式 2：使用環境變數檔案**
 ```bash
 # .env
-EMBEDDING_MODEL=all-MiniLM-L6-v2
+EMBEDDING_MODEL=google/embeddinggemma-300m
 ```
 
 然後重新啟動：
@@ -214,10 +214,10 @@ docker-compose up -d
 
 ### Q2: 容器啟動慢怎麼辦？
 
-**原因：** 首次啟動需要下載 Embedding 模型（約 120MB）
+**原因：** 首次啟動需要下載 Embedding 模型（約 600MB）
 
 **解決：**
-1. 使用較小的模型：`all-MiniLM-L6-v2`（80MB）
+1. 使用較小的模型：`google/embeddinggemma-300m`（600MB）
 2. 等待 60 秒讓 healthcheck 完成
 3. 查看啟動日誌：
    ```bash
@@ -283,8 +283,8 @@ docker-compose logs | grep ERROR
 [*] Initializing services...
     - Database: /app/chroma_db
     - Collection: mcp_knowledge_base
-    - Embedding model: paraphrase-multilingual-MiniLM-L12-v2
-[OK] Loaded embedding model: paraphrase-multilingual-MiniLM-L12-v2
+    - Embedding model: google/embeddinggemma-300m
+[OK] Loaded embedding model: google/embeddinggemma-300m
 [OK] Services initialized
 
 [*] Creating MCP Server...

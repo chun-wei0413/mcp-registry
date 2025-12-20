@@ -430,7 +430,7 @@ CHUNKING_CONFIG = {
     ],
 
     # Embedding 模型
-    "MODEL": "paraphrase-multilingual-MiniLM-L12-v2",
+    "MODEL": "google/embeddinggemma-300m",
     "DIMENSION": 384,  # 向量維度
 
     # ChromaDB 配置

@@ -33,7 +33,7 @@ mcp-registry/
 ### Context Provisioning Server（Python RAG）
 - **語言**: Python 3.11+
 - **框架**: FastMCP (Anthropic 官方 SDK)
-- **向量搜尋**: ChromaDB, Sentence Transformers (all-MiniLM-L6-v2)
+- **向量搜尋**: ChromaDB, Sentence Transformers (google/embeddinggemma-300m)
 - **資料驗證**: Pydantic
 - **部署**: Docker Compose
 
@@ -104,7 +104,7 @@ mcp:
       type: chromadb                 # 內嵌式向量資料庫
       path: ./data/chroma
     embedding:
-      model: all-MiniLM-L6-v2       # 本地嵌入模型
+      model: google/embeddinggemma-300m       # 本地嵌入模型
       device: cpu                    # 或 cuda
 ```
 

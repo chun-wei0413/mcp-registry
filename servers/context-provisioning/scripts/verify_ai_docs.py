@@ -299,7 +299,7 @@ class AIDocsVerifier:
                     pass
 
         # 取得 embedding 維度（不同於 embeddings 列表）
-        embedding_dimension = 384  # paraphrase-multilingual-MiniLM-L12-v2 的維度
+        embedding_dimension = 768  # google/embeddinggemma-300m 的維度
 
         performance = {
             'total_documents': len(all_docs['ids']),

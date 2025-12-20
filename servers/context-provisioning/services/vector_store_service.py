@@ -5,10 +5,12 @@ Handles embedding generation, storage, and retrieval using ChromaDB.
 """
 import chromadb
 from sentence_transformers import SentenceTransformer
+import torch
 import uuid
 import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 from utils.markdown_parser import MarkdownParser
 
 
@@ -20,7 +22,7 @@ class VectorStoreService:
     def __init__(self,
                  db_path: str = "./chroma_db",
                  collection_name: str = "mcp_knowledge_base",
-                 embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"):
+                 embedding_model: str = "google/embeddinggemma-300m"):
         """
         Initializes the VectorStore.
 
@@ -28,15 +30,51 @@ class VectorStoreService:
             db_path (str): The path to the directory where the database will be persisted.
             collection_name (str): The name of the collection to use.
             embedding_model (str): The SentenceTransformer model name.
-                                  Default: paraphrase-multilingual-MiniLM-L12-v2 (supports multilingual)
+                                  Default: google/embeddinggemma-300m (supports multilingual, 768 dimensions)
         """
         self.db_client = chromadb.PersistentClient(path=db_path)
         self.collection = self.db_client.get_or_create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"}  # Use cosine similarity
         )
-        self.model = SentenceTransformer(embedding_model)
-        print(f"[OK] Loaded embedding model: {embedding_model}")
+
+        # Initialize model with bfloat16 for optimal performance
+        device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+        self.model = SentenceTransformer(
+            embedding_model,
+            device=device,
+            model_kwargs={"torch_dtype": torch.bfloat16} if device in ["cuda", "mps"] else {}
+        )
+        print(f"[OK] Loaded embedding model: {embedding_model} on device: {device}")
+
+    @staticmethod
+    def _format_query_prompt(query: str) -> str:
+        """
+        Format query text with EmbeddingGemma prompt template.
+
+        Args:
+            query (str): The user's search query
+
+        Returns:
+            str: Formatted query with task prefix
+        """
+        return f"task: search result | query: {query}"
+
+    @staticmethod
+    def _format_document_prompt(text: str, title: str = None) -> str:
+        """
+        Format document text with EmbeddingGemma prompt template.
+
+        Args:
+            text (str): The document text content
+            title (str, optional): Optional document title
+
+        Returns:
+            str: Formatted document with title prefix
+        """
+        if title:
+            return f"title: {title} | text: {text}"
+        return f"text: {text}"
 
     @staticmethod
     def _format_result(doc_id: str, content: str, metadata: Dict[str, Any],
@@ -83,12 +121,15 @@ class VectorStoreService:
         """
         doc_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
-        embedding = self.model.encode(content).tolist()
+
+        # Format content with EmbeddingGemma prompt template
+        formatted_content = self._format_document_prompt(content, title=topic)
+        embedding = self.model.encode(formatted_content).tolist()
 
         self.collection.add(
             ids=[doc_id],
             embeddings=[embedding],
-            documents=[content],
+            documents=[content],  # Store original content, not the formatted version
             metadatas=[{"topic": topic, "timestamp": timestamp}]
         )
         return doc_id
@@ -105,7 +146,9 @@ class VectorStoreService:
         Returns:
             List[Dict[str, Any]]: A list of result dictionaries with code blocks.
         """
-        query_embedding = self.model.encode(query).tolist()
+        # Format query with EmbeddingGemma prompt template
+        formatted_query = self._format_query_prompt(query)
+        query_embedding = self.model.encode(formatted_query).tolist()
 
         query_params = {
             "query_embeddings": [query_embedding],
@@ -205,10 +248,15 @@ class VectorStoreService:
             str: The document ID
         """
         doc_id = str(uuid.uuid4())
-        timestamp = datetime.datetime.utcnow().isoformat()
+        timestamp = datetime.utcnow().isoformat()
 
-        # IMPORTANT: Only embed the text content, NOT the code
-        embedding = self.model.encode(content).tolist()
+        # Format content with EmbeddingGemma prompt template
+        # Use section_title or topic as document title if available
+        title = metadata.get("section_title") or metadata.get("topic")
+        formatted_content = self._format_document_prompt(content, title=title)
+
+        # IMPORTANT: Only embed the formatted text content, NOT the code
+        embedding = self.model.encode(formatted_content).tolist()
 
         # Prepare metadata
         full_metadata = {**metadata, "timestamp": timestamp, "chunk_type": "complete"}
@@ -220,7 +268,7 @@ class VectorStoreService:
         self.collection.add(
             ids=[doc_id],
             embeddings=[embedding],
-            documents=[content],
+            documents=[content],  # Store original content, not formatted version
             metadatas=[full_metadata]
         )
         return doc_id

@@ -50,7 +50,7 @@
 ```yaml
 核心技術:
   - MCP SDK: FastMCP
-  - Embedding 模型: all-MiniLM-L6-v2 (80MB, 本地運行)
+  - Embedding 模型: google/embeddinggemma-300m (600MB, 本地運行)
   - 向量資料庫: ChromaDB (內嵌式, 零配置)
   - 文件處理: Python 標準庫
 
@@ -316,7 +316,7 @@ ddd_knowledge = retrieve_all_by_topic(topic="DDD")
 │  VectorStore (storage.py)   │
 │  ┌─────────────────────┐   │
 │  │ SentenceTransformer │   │
-│  │ (all-MiniLM-L6-v2)  │   │
+│  │ (google/embeddinggemma-300m)  │   │
 │  └──────────┬──────────┘   │
 │             │               │
 │  ┌──────────▼──────────┐   │
@@ -330,10 +330,10 @@ ddd_knowledge = retrieve_all_by_topic(topic="DDD")
 
 ### Embedding 模型選擇
 
-選用 **all-MiniLM-L6-v2** 的原因：
-- ✅ 輕量（80MB）
+選用 **google/embeddinggemma-300m** 的原因：
+- ✅ 輕量（600MB）
 - ✅ 本地運行（無需 API key）
-- ✅ 速度快（384 維度）
+- ✅ 速度快（768 維度）
 - ✅ 準確度足夠（Semantic Search 排名前列）
 
 ### 向量資料庫選擇
@@ -359,7 +359,7 @@ ddd_knowledge = retrieve_all_by_topic(topic="DDD")
 
 ```bash
 # 手動下載模型
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('google/embeddinggemma-300m')"
 ```
 
 ### 問題 2: ChromaDB 初始化錯誤

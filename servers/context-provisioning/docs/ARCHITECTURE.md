@@ -287,8 +287,8 @@ Claude CLI
 ### 資料層
 - **ChromaDB**: 向量資料庫（內嵌式）
 - **SentenceTransformer**: Embedding 模型
-  - 預設：`paraphrase-multilingual-MiniLM-L12-v2`（支援中英文）
-  - 替代：`all-MiniLM-L6-v2`（純英文，更快）
+  - 預設：`google/embeddinggemma-300m`（支援中英文）
+  - 替代：`google/embeddinggemma-300m`（純英文，更快）
 
 ### 傳輸協定
 - **HTTP/SSE**: Server-Sent Events（FastMCP 內建）

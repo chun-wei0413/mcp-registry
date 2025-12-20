@@ -62,7 +62,7 @@ from services.vector_store_service import VectorStoreService
 vector_store = VectorStoreService(
     db_path="./chroma_db",                              # ChromaDB 儲存路徑
     collection_name="ai_documentation",                 # 集合名稱
-    embedding_model="paraphrase-multilingual-MiniLM-L12-v2"  # 嵌入模型
+    embedding_model="google/embeddinggemma-300m"  # 嵌入模型
 )
 ```
 
@@ -72,7 +72,7 @@ vector_store = VectorStoreService(
 |------|------|--------|------|
 | `db_path` | `str` | `"./chroma_db"` | ChromaDB 數據庫儲存目錄 |
 | `collection_name` | `str` | `"mcp_knowledge_base"` | 使用的集合名稱（支援多個集合） |
-| `embedding_model` | `str` | `"paraphrase-multilingual-MiniLM-L12-v2"` | 嵌入模型（支援多語言） |
+| `embedding_model` | `str` | `"google/embeddinggemma-300m"` | 嵌入模型（支援多語言） |
 
 ### 核心方法
 

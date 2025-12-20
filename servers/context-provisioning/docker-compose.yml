@@ -20,9 +20,8 @@ services:
       - MCP_SERVER_NAME=RAG Context Provisioning Server
       - CHROMA_DB_PATH=/app/chroma_db
 
-      # Embedding model (change if needed)
-      - EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
-      # Alternative faster model: all-MiniLM-L6-v2
+      # Embedding model (google/embeddinggemma-300m - 768 dimensions)
+      - EMBEDDING_MODEL=google/embeddinggemma-300m
 
       # Python settings
       - PYTHONUNBUFFERED=1
