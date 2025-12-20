@@ -5,7 +5,7 @@
 ### 啟動 MCP Server
 
 ```bash
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 ./venv/bin/python mcp_server.py
 ```
 
@@ -514,7 +514,7 @@ AI App 更新索引完成
 ### ChromaDB 位置
 
 ```
-servers/python/RAG-memory-mcp/chroma_db/
+servers/python/RAG-context-provisioning/chroma_db/
 ├── chroma.sqlite3          # 主數據庫
 └── 089237fa-.../           # Collection 數據
 ```

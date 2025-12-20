@@ -4,7 +4,7 @@
 
 ---
 
-# Memory MCP Server (Python)
+# Context Provisioning Server (Python)
 
 ## 專案概述
 
@@ -36,7 +36,7 @@
 - 📈 語意搜尋準確度提升 **~40%**
 - ⚡ 搜尋速度提升（更小的 embedding 向量）
 
-詳細技術文件：`servers/python/RAG-memory-mcp/docs/CODE_SEPARATION.md`
+詳細技術文件：`servers/python/RAG-context-provisioning/docs/CODE_SEPARATION.md`
 
 ## 技術架構
 
@@ -237,7 +237,7 @@ cd servers/python
 docker-compose up -d
 
 # 2. 查看日誌
-docker-compose logs -f memory-mcp
+docker-compose logs -f context-provisioning
 
 # 3. 停止服務
 docker-compose down

@@ -367,4 +367,4 @@ print(f"Found {len(results)} results")
 
 **最後更新：** 2025-11-24
 **版本：** v2.0
-**維護者：** RAG Memory MCP Team
+**維護者：** RAG Context Provisioning Team

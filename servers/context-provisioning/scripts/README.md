@@ -1,6 +1,6 @@
 # Scripts 工具腳本
 
-本目錄包含 RAG Memory MCP Server 的工具腳本。
+本目錄包含 RAG Context Provisioning Server 的工具腳本。
 
 ## 📜 腳本列表
 
@@ -10,7 +10,7 @@
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 python scripts/ingest_ai_docs.py
 ```
 
@@ -33,7 +33,7 @@ python scripts/ingest_ai_docs.py
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 python scripts/verify_ai_docs.py
 ```
 
@@ -56,7 +56,7 @@ python scripts/verify_ai_docs.py
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 python scripts/check_paths.py
 ```
 
@@ -111,6 +111,6 @@ python scripts/verify_ai_docs.py
 ## 📝 注意事項
 
 1. **環境需求**: 確保已安裝 `requirements.txt` 中的所有依賴
-2. **工作目錄**: 所有腳本都假設從 `servers/python/RAG-memory-mcp/` 目錄執行
+2. **工作目錄**: 所有腳本都假設從 `servers/python/RAG-context-provisioning/` 目錄執行
 3. **資料備份**: 執行 `ingest_ai_docs.py` 前建議先備份 `chroma_db/` 目錄
 4. **跨平台**: 所有腳本在 Windows、Linux、macOS 上都可正常運作

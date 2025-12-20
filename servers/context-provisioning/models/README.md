@@ -1,6 +1,6 @@
 # Knowledge Models - 資料模型說明
 
-本目錄包含 Memory MCP Server 的所有資料模型定義，使用 Pydantic 進行資料驗證和序列化。
+本目錄包含 Context Provisioning Server 的所有資料模型定義，使用 Pydantic 進行資料驗證和序列化。
 
 ## 📂 檔案概述
 

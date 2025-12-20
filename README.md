@@ -8,7 +8,7 @@
 
 | MCP Server | 功能 | 狀態 | 用途 |
 |-----------|------|------|------|
-| **Memory MCP** | RAG 知識庫 | ✅ 生產就緒 | 專案文件語義搜尋與知識管理 |
+| **Context Provisioning** | RAG 知識庫 | ✅ 生產就緒 | 專案文件語義搜尋與知識管理 |
 
 ## 🏗️ 專案結構
 
@@ -17,20 +17,20 @@ mcp-registry/
 ├── 📄 CLAUDE.md                  # Claude AI 規範
 │
 ├── 📁 servers/                         # MCP Server 實作
-│   └── 📁 memory-mcp/                  # Memory MCP Server（RAG 知識庫）
+│   └── 📁 context-provisioning/                  # Context Provisioning Server（RAG 知識庫）
 │       ├── mcp_server.py               # FastMCP 伺服器（4 個工具）
 │       ├── storage.py                  # ChromaDB + Sentence Transformers
 │       ├── docker-compose.yml          # Docker 部署
 │       ├── Dockerfile                  # 容器定義
 │       ├── requirements.txt            # Python 依賴
-│       └── README.md                   # Memory MCP 說明
+│       └── README.md                   # Context Provisioning 說明
 │
 └── 📄 README.md                  # 本文件
 ```
 
 ## 🛠️ 技術棧
 
-### Memory MCP Server（Python RAG）
+### Context Provisioning Server（Python RAG）
 - **語言**: Python 3.11+
 - **框架**: FastMCP (Anthropic 官方 SDK)
 - **向量搜尋**: ChromaDB, Sentence Transformers (all-MiniLM-L6-v2)
@@ -42,24 +42,24 @@ mcp-registry/
 ### 方法 1: Docker Compose（推薦）
 
 ```bash
-cd servers/memory-mcp
+cd servers/context-provisioning
 docker-compose up -d
 
 # 查看日誌
-docker-compose logs -f memory-mcp
+docker-compose logs -f context-provisioning
 ```
 
 ### 方法 2: 本地開發
 
 ```bash
-cd servers/memory-mcp
+cd servers/context-provisioning
 pip install -r requirements.txt
 python mcp_server.py
 ```
 
 ## 🔧 核心功能
 
-### Memory MCP Tools（Python RAG 系統）
+### Context Provisioning Tools（Python RAG 系統）
 
 #### 文件管理
 - `store_document` - 讀取並儲存專案文件（.md, .json, .txt）
@@ -81,7 +81,7 @@ search_knowledge(query="Clean Architecture", top_k=5)
 
 ## 📊 技術亮點
 
-### ✅ RAG 知識管理系統（Memory MCP）
+### ✅ RAG 知識管理系統（Context Provisioning）
 - **向量語義搜尋** 提升搜尋精準度
 - **ChromaDB** 內嵌式向量資料庫（零配置）
 - **Sentence Transformers** 本地嵌入模型
@@ -90,7 +90,7 @@ search_knowledge(query="Clean Architecture", top_k=5)
 ## 🧪 測試
 
 ```bash
-cd servers/memory-mcp
+cd servers/context-provisioning
 pytest tests/
 ```
 
@@ -111,11 +111,11 @@ mcp:
 ## 📚 詳細文檔
 
 - 📖 **開發規範**: [CLAUDE.md](CLAUDE.md) - 完整開發規範
-- 🐍 **Memory MCP**: [servers/memory-mcp/README.md](servers/memory-mcp/README.md) - Python RAG 系統完整說明
+- 🐍 **Context Provisioning**: [servers/context-provisioning/README.md](servers/context-provisioning/README.md) - Python RAG 系統完整說明
 
 ## 🎯 使用場景
 
-### 專案知識管理（Memory MCP）
+### 專案知識管理（Context Provisioning）
 ```python
 # AI 助手儲存專案規格到 RAG 系統
 store_document(file_path="./Spec.md")
@@ -126,7 +126,7 @@ search_knowledge(query="Clean Architecture 原則", top_k=3)
 
 ## 🔄 架構設計
 
-### Memory MCP 向量搜尋流程
+### Context Provisioning 向量搜尋流程
 ```
 使用者查詢: "如何實現登入功能"
     ↓
@@ -147,7 +147,7 @@ ChromaDB: 向量相似度搜尋 (Cosine Similarity)
 
 | 指標 | 數值 |
 |------|------|
-| **Memory MCP Python 模組** | 4 |
+| **Context Provisioning Python 模組** | 4 |
 | **MCP Tools** | 4 |
 | **Docker Compose 配置** | 1 |
 | **文檔文件** | 5+ |

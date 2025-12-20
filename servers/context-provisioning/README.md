@@ -1,4 +1,4 @@
-# Memory MCP Server
+# Context Provisioning Server
 
 基於 RAG（Retrieval-Augmented Generation）的專案知識管理系統，讓 Claude CLI 能夠讀取並查詢專案文件。
 
@@ -79,13 +79,13 @@ Docker 基礎映像:
 
 ```bash
 # 1. 進入專案目錄
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 
 # 2. 啟動服務
 docker-compose up -d
 
 # 3. 查看日誌
-docker-compose logs -f rag-memory-mcp
+docker-compose logs -f rag-context-provisioning
 
 # 4. 停止服務
 docker-compose down
@@ -95,14 +95,14 @@ docker-compose down
 
 #### 快速方式（推薦 macOS）
 ```bash
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 bash start.sh
 ```
 
 #### 手動方式
 ```bash
 # 1. 進入專案目錄
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 
 # 2. 建立虛擬環境
 python3 -m venv venv
@@ -184,7 +184,7 @@ retrieve_all_by_topic(topic="DDD")
 ## 📂 目錄結構
 
 ```
-servers/python/RAG-memory-mcp/
+servers/python/RAG-context-provisioning/
 ├── 核心程式
 │   ├── app.py                  # FastAPI 應用主程式
 │   ├── mcp_server.py           # MCP 伺服器入口
@@ -240,7 +240,7 @@ servers/python/RAG-memory-mcp/
 
 | 變數 | 預設值 | 說明 |
 |------|--------|------|
-| `MCP_SERVER_NAME` | Memory MCP Server | MCP 伺服器名稱 |
+| `MCP_SERVER_NAME` | Context Provisioning Server | MCP 伺服器名稱 |
 | `CHROMA_DB_PATH` | ./chroma_db | ChromaDB 資料目錄 |
 | `PYTHONUNBUFFERED` | 1 | Python 輸出不緩衝 |
 
@@ -374,7 +374,7 @@ docker-compose restart
 
 ```bash
 # 查看詳細日誌
-docker-compose logs memory-mcp
+docker-compose logs context-provisioning
 
 # 重建映像
 docker-compose build --no-cache

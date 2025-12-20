@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rag-memory-mcp-server
+    container_name: rag-context-provisioning-server
     ports:
       - "3031:3031"  # MCP Server (SSE transport)
     volumes:
@@ -17,7 +17,7 @@ services:
 
     environment:
       # Server configuration
-      - MCP_SERVER_NAME=RAG Memory MCP Server
+      - MCP_SERVER_NAME=RAG Context Provisioning Server
       - CHROMA_DB_PATH=/app/chroma_db
 
       # Embedding model (change if needed)

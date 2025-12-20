@@ -365,7 +365,7 @@ results = search_knowledge(
 
 ```bash
 # 在原始裝置
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 tar -czf chroma_db.tar.gz chroma_db/
 
 # 傳輸到新裝置後解壓
@@ -377,7 +377,7 @@ python verify_ai_docs.py
 
 ### 3. 透過 MCP Server 檢索
 
-啟動 Memory MCP Server 後，可直接使用 MCP Tools 檢索：
+啟動 Context Provisioning Server 後，可直接使用 MCP Tools 檢索：
 
 ```python
 # 語義搜尋
@@ -538,7 +538,7 @@ for result in results:
 如果 .ai 目錄有更新，重新執行：
 
 ```bash
-cd servers/python/RAG-memory-mcp
+cd servers/python/RAG-context-provisioning
 python ingest_ai_docs.py
 ```
 
@@ -578,7 +578,7 @@ python ingest_ai_docs.py
 
 1. **直接使用**: 資料已準備好，無需重新處理
 2. **跨設備遷移**: 複製 `chroma_db/` 目錄即可
-3. **MCP 整合**: 透過 Memory MCP Server 提供 AI 檢索能力
+3. **MCP 整合**: 透過 Context Provisioning Server 提供 AI 檢索能力
 4. **定期更新**: .ai 目錄有重大更新時重新執行處理腳本
 
 ---

@@ -1,6 +1,6 @@
 # Docker 部署指南
 
-本指南說明如何使用 Docker 和 Docker Compose 部署 RAG Memory MCP Server。
+本指南說明如何使用 Docker 和 Docker Compose 部署 RAG Context Provisioning Server。
 
 ---
 
@@ -13,7 +13,7 @@
 docker-compose up -d
 
 # 2. 查看日誌
-docker-compose logs -f rag-memory-mcp
+docker-compose logs -f rag-context-provisioning
 
 # 3. 停止服務
 docker-compose down
@@ -26,22 +26,22 @@ docker-compose up -d --build
 
 ```bash
 # 1. 建置映像
-docker build -t rag-memory-mcp .
+docker build -t rag-context-provisioning .
 
 # 2. 執行容器
 docker run -d \
-  --name rag-memory-mcp \
+  --name rag-context-provisioning \
   -p 3031:3031 \
   -v $(pwd)/chroma_db:/app/chroma_db \
   -e EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2 \
-  rag-memory-mcp
+  rag-context-provisioning
 
 # 3. 查看日誌
-docker logs -f rag-memory-mcp
+docker logs -f rag-context-provisioning
 
 # 4. 停止容器
-docker stop rag-memory-mcp
-docker rm rag-memory-mcp
+docker stop rag-context-provisioning
+docker rm rag-context-provisioning
 ```
 
 ---
@@ -126,7 +126,7 @@ healthcheck:
 ```bash
 docker-compose ps
 # 或
-docker inspect rag-memory-mcp-server --format='{{.State.Health.Status}}'
+docker inspect rag-context-provisioning-server --format='{{.State.Health.Status}}'
 ```
 
 ---
@@ -170,7 +170,7 @@ networks:
 
 ```yaml
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     # ... 其他配置
     networks:
       - mcp-network
@@ -221,7 +221,7 @@ docker-compose up -d
 2. 等待 60 秒讓 healthcheck 完成
 3. 查看啟動日誌：
    ```bash
-   docker-compose logs -f rag-memory-mcp
+   docker-compose logs -f rag-context-provisioning
    ```
 
 ### Q3: 如何清除資料庫重新開始？
@@ -241,10 +241,10 @@ docker-compose up -d
 
 ```bash
 # 執行 shell
-docker-compose exec rag-memory-mcp /bin/bash
+docker-compose exec rag-context-provisioning /bin/bash
 
 # 或使用 docker
-docker exec -it rag-memory-mcp-server /bin/bash
+docker exec -it rag-context-provisioning-server /bin/bash
 ```
 
 ### Q5: 如何升級到新版本？
@@ -311,7 +311,7 @@ docker-compose logs | grep ERROR
 ```yaml
 # docker-compose.yml
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     secrets:
       - db_password
     environment:
@@ -326,7 +326,7 @@ secrets:
 
 ```yaml
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     logging:
       driver: "json-file"
       options:
@@ -338,7 +338,7 @@ services:
 
 ```yaml
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     restart: unless-stopped
 ```
 
@@ -347,7 +347,7 @@ services:
 ```yaml
 # docker-compose.yml
 services:
-  rag-memory-mcp:
+  rag-context-provisioning:
     profiles: ["production"]
 
 # 啟動生產環境

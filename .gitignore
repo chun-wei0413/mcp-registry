@@ -37,7 +37,7 @@ application-*.properties
 .idea
 
 # ChromaDB - Ignore vector database (regenerated on each run)
-servers/memory-mcp/chroma_db/
+servers/context-provisioning/chroma_db/
 
 # Python virtual environments
 venv/

@@ -1,6 +1,6 @@
 # macOS 快速開始指南
 
-在 macOS 上快速啟動 RAG Memory MCP Server，共有三種方式可選。
+在 macOS 上快速啟動 RAG Context Provisioning Server，共有三種方式可選。
 
 ---
 
@@ -20,7 +20,7 @@
 
 #### 1️⃣ 進入專案目錄
 ```bash
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 ```
 
 #### 2️⃣ 啟動服務
@@ -38,7 +38,7 @@ docker-compose up -d
 #### 3️⃣ 查看啟動日誌
 ```bash
 # 即時查看日誌
-docker-compose logs -f rag-memory-mcp
+docker-compose logs -f rag-context-provisioning
 
 # 預期的成功日誌輸出：
 # [*] Starting MCP Server...
@@ -53,7 +53,7 @@ docker-compose ps
 
 # 應該看到：
 # NAME                    STATUS
-# rag-memory-mcp-server   Up X minutes (healthy)
+# rag-context-provisioning-server   Up X minutes (healthy)
 ```
 
 #### 5️⃣ 停止服務
@@ -86,7 +86,7 @@ docker-compose down
 #### 🚀 一個指令啟動伺服器
 
 ```bash
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 bash start.sh
 ```
 
@@ -101,7 +101,7 @@ bash start.sh
 
 #### 1️⃣ 進入專案目錄
 ```bash
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 ```
 
 #### 2️⃣ 建立虛擬環境
@@ -161,43 +161,43 @@ python mcp_server.py
 ### 建置映像
 
 ```bash
-cd /path/to/mcp-registry/servers/python/RAG-memory-mcp
+cd /path/to/mcp-registry/servers/python/RAG-context-provisioning
 
 # 建置映像
-docker build -t rag-memory-mcp .
+docker build -t rag-context-provisioning .
 
 # 驗證建置成功
-docker images | grep rag-memory-mcp
+docker images | grep rag-context-provisioning
 ```
 
 ### 執行容器
 
 ```bash
 docker run -d \
-  --name rag-memory-mcp-server \
+  --name rag-context-provisioning-server \
   -p 3031:3031 \
   -v $(pwd)/chroma_db:/app/chroma_db \
   -e EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2 \
-  rag-memory-mcp
+  rag-context-provisioning
 ```
 
 ### 容器管理命令
 
 ```bash
 # 查看容器日誌
-docker logs -f rag-memory-mcp-server
+docker logs -f rag-context-provisioning-server
 
 # 進入容器 shell（除錯用）
-docker exec -it rag-memory-mcp-server /bin/bash
+docker exec -it rag-context-provisioning-server /bin/bash
 
 # 檢查容器資訊
-docker inspect rag-memory-mcp-server
+docker inspect rag-context-provisioning-server
 
 # 停止容器
-docker stop rag-memory-mcp-server
+docker stop rag-context-provisioning-server
 
 # 刪除容器
-docker rm rag-memory-mcp-server
+docker rm rag-context-provisioning-server
 
 # 查看所有容器
 docker ps -a
@@ -230,7 +230,7 @@ docker-compose logs | grep "Listening"
 
 ```bash
 # Docker 方式
-docker-compose exec rag-memory-mcp python -c "from storage import get_collection; print(get_collection().count())"
+docker-compose exec rag-context-provisioning python -c "from storage import get_collection; print(get_collection().count())"
 
 # 本地開發方式
 python -c "from storage import get_collection; print(get_collection().count())"
@@ -246,11 +246,11 @@ python -c "from storage import get_collection; print(get_collection().count())"
 |------|------|
 | **啟動** | `docker-compose up -d` |
 | **停止** | `docker-compose down` |
-| **查看日誌** | `docker-compose logs -f rag-memory-mcp` |
+| **查看日誌** | `docker-compose logs -f rag-context-provisioning` |
 | **重新啟動** | `docker-compose restart` |
 | **重新構建** | `docker-compose up -d --build` |
 | **查看容器狀態** | `docker-compose ps` |
-| **進入容器** | `docker-compose exec rag-memory-mcp /bin/bash` |
+| **進入容器** | `docker-compose exec rag-context-provisioning /bin/bash` |
 | **清除所有資料** | `docker-compose down -v` |
 
 ### 本地開發操作
@@ -270,7 +270,7 @@ python -c "from storage import get_collection; print(get_collection().count())"
 ## 資料夾結構說明
 
 ```
-RAG-memory-mcp/
+RAG-context-provisioning/
 ├── mcp_server.py              # ← MCP Server 入口點（本地開發執行此檔案）
 ├── app.py                     # FastMCP 應用工廠
 ├── docker-compose.yml         # ← Docker Compose 配置
@@ -296,7 +296,7 @@ RAG-memory-mcp/
 
 ```yaml
 environment:
-  - MCP_SERVER_NAME=RAG Memory MCP Server
+  - MCP_SERVER_NAME=RAG Context Provisioning Server
   - CHROMA_DB_PATH=/app/chroma_db
   - EMBEDDING_MODEL=all-MiniLM-L6-v2  # 改為快速模型
   - PYTHONUNBUFFERED=1

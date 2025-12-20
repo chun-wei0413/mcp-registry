@@ -1,4 +1,4 @@
-# RAG Memory MCP Server - 專案架構
+# RAG Context Provisioning Server - 專案架構
 
 ## 總覽
 
@@ -9,7 +9,7 @@
 ## 專案結構
 
 ```
-servers/python/RAG-memory-mcp/
+servers/python/RAG-context-provisioning/
 ├── mcp_server.py                          # 主入口點（極簡啟動器）
 ├── app.py                                 # Application Factory（應用程式工廠）
 │

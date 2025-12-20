@@ -29,7 +29,7 @@
 #### 方式 1：直接運行
 
 ```bash
-cd /Users/frankli/Coding/mcp-registry/servers/python/RAG-memory-mcp
+cd /Users/frankli/Coding/mcp-registry/servers/python/RAG-context-provisioning
 
 # 使用虛擬環境的 Python
 ./venv/bin/python3 tests/test_markdown_parser.py
@@ -474,5 +474,5 @@ Test 3 (real_world_example):         < 8ms
 
 **最後更新：** 2025-11-24
 **版本：** v2.0
-**維護者：** RAG Memory MCP Team
+**維護者：** RAG Context Provisioning Team
 

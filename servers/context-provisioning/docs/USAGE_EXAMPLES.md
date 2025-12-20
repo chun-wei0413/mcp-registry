@@ -1,6 +1,6 @@
-# Memory MCP Server 使用指南
+# Context Provisioning Server 使用指南
 
-本文件提供 Memory MCP Server v2.0 的完整使用指南，包括資料 Ingest、查詢搜尋和實際範例。
+本文件提供 Context Provisioning Server v2.0 的完整使用指南，包括資料 Ingest、查詢搜尋和實際範例。
 
 ## 目錄
 - [快速開始](#快速開始)
