@@ -44,14 +44,3 @@ class RetrievalResult(BaseModel):
     knowledge_points: List[KnowledgePoint]
 
 
-# Request Models
-
-class IndexingStats(BaseModel):
-    """Statistics from a batch indexing operation."""
-    total_files: int
-    processed_files: int
-    failed_files: int
-    total_chunks: int
-    skipped_files: int
-    duration_seconds: float
-    file_details: Optional[List[Dict[str, Any]]] = None

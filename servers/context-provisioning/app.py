@@ -8,7 +8,6 @@ from mcp.server import FastMCP
 
 # Services
 from services.vector_store_service import VectorStoreService
-from services.context_chunking_service import ContextChunkingService
 
 # Controllers
 from controllers.knowledge_controller import register_knowledge_tools
@@ -76,9 +75,6 @@ def create_app(
         collection_name=collection_name,
         embedding_model=embedding_model
     )
-
-    # Initialize Context Chunking Service
-    context_chunking = ContextChunkingService(vector_store=vector_store)
 
     print(f"[OK] Services initialized\n")
 
