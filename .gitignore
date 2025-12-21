@@ -138,3 +138,6 @@ deployment/*/backup_data/
 # Documentation build outputs
 documentation/_build/
 documentation/build/
+
+# .ai Spec
+.ai

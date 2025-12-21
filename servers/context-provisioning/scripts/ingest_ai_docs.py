@@ -34,12 +34,12 @@ from utils.markdown_parser import MarkdownParser
 class AIDocsChunker:
     """AI 文檔智能分塊器（支援代碼分離）"""
 
-    # Chunking 配置
-    SMALL_FILE_THRESHOLD = 800      # 小於 800 tokens 的文件整個作為一個 chunk
-    LARGE_FILE_THRESHOLD = 2000     # 大於 2000 tokens 的文件需要切分
-    CHUNK_SIZE = 1500               # 目標 chunk 大小（tokens）
+    # Chunking 配置（針對 EmbeddingGemma-300M 的 2048 token 限制優化）
+    SMALL_FILE_THRESHOLD = 1500     # 小於 1500 tokens 的文件整個作為一個 chunk（安全範圍）
+    LARGE_FILE_THRESHOLD = 1800     # 大於 1800 tokens 的文件需要切分
+    CHUNK_SIZE = 1200               # 目標 chunk 大小（tokens），保守設定避免超過限制
     CHUNK_OVERLAP = 200             # 重疊區域（tokens）
-    MAX_CHUNK_SIZE_CHARS = 4000     # 最大 chunk 字符數（用於MarkdownParser）
+    MAX_CHUNK_SIZE_CHARS = 1800     # 最大 chunk 字符數（用於MarkdownParser，對應約 1500-1800 tokens）
 
     # 文件分類與優先級映射
     CATEGORY_PRIORITY = {
