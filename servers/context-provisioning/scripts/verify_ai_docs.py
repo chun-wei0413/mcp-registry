@@ -395,7 +395,7 @@ def main():
     print("\n初始化向量存儲...")
     vector_store = VectorStoreService(
         db_path=str(chroma_db_dir),
-        collection_name="ai_documentation"
+        collection_name="aggregate"
     )
 
     # 運行驗證

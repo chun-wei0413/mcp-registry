@@ -39,7 +39,7 @@ results = search_knowledge("test", top_k=10, topic="prompts-subagent")
 
 **實現細節：**
 - 使用 `VectorStoreService.search_knowledge()` 進行語義搜尋
-- 默認搜尋 `ai_documentation` collection（1,116 chunks）
+- 默認搜尋 `aggregate` collection（100 chunks - DDD Aggregate 知識庫）
 - 支援可選的主題過濾
 
 ---
@@ -323,7 +323,7 @@ register_resources(server, vector_store)
 ```python
 from services.vector_store_service import VectorStoreService
 
-vs = VectorStoreService(db_path="./chroma_db", collection_name="ai_documentation")
+vs = VectorStoreService(db_path="./chroma_db", collection_name="aggregate")
 
 # 測試搜尋
 results = vs.search_knowledge("test query", top_k=5)

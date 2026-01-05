@@ -10,19 +10,31 @@
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-context-provisioning
+cd servers/context-provisioning
 python scripts/ingest_ai_docs.py
 ```
 
+**Chunking 策略**:
+1. **語意完整 Chunking (Semantically Complete Chunking)**:
+   - 每個 `##` 標題 = 一個語意完整的 Chunk（不再細分）
+   - 每個 Chunk 同時包含：設計意圖 (Why) + 實作邏輯 (How) + 正確範例 (✅) + 錯誤範例 (❌)
+   - 避免 Intent 和 Code 分離在不同檔案
+   - 優化 RAG 檢索效果
+
+2. **智能程式碼分離 (Code Separation)**:
+   - 分離程式碼與文字，只對文字計算 embedding
+   - 程式碼儲存在 metadata 中（完整保留但不參與搜尋）
+   - 查詢結果仍包含完整程式碼
+
 **功能**:
-- 遞迴讀取 `.ai/` 目錄下所有 `.md` 檔案
-- 根據檔案大小智能選擇 chunking 策略
+- 遞迴讀取 `data/.ai/` 目錄下所有 `.md` 檔案
+- 按 `##` 標題分割為語意完整的 chunks
 - 生成豐富的元數據（分類、優先級、主題標籤）
-- 存入 ChromaDB 的 `ai_documentation` 集合
+- 存入 ChromaDB 的 `aggregate` 集合
 
 **何時使用**:
 - 首次設置系統時
-- `.ai/` 目錄有重大更新時
+- `data/.ai/` 目錄有重大更新時
 - 需要重建 ChromaDB 資料時
 
 ---
@@ -33,7 +45,7 @@ python scripts/ingest_ai_docs.py
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-context-provisioning
+cd servers/context-provisioning
 python scripts/verify_ai_docs.py
 ```
 
@@ -56,7 +68,7 @@ python scripts/verify_ai_docs.py
 
 **執行方式**:
 ```bash
-cd servers/python/RAG-context-provisioning
+cd servers/context-provisioning
 python scripts/check_paths.py
 ```
 

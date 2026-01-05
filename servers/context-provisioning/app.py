@@ -38,9 +38,9 @@ def create_app(
 
     Environment Variables:
         CHROMA_DB_PATH: Database path (default: ./chroma_db)
-        COLLECTION_NAME: Collection name (default: ai_documentation)
+        COLLECTION_NAME: Collection name (default: aggregate)
                         Options:
-                        - ai_documentation (1,116 chunks - RAG index for .ai directory) ⭐ RECOMMENDED
+                        - aggregate (100 chunks - DDD Aggregate 知識庫，語意完整 Chunking) ⭐ RECOMMENDED
                         - mcp_knowledge_base (for manual knowledge points)
         EMBEDDING_MODEL: Model name (default: google/embeddinggemma-300m)
         MCP_SERVER_HOST: Server host (default: 0.0.0.0)
@@ -55,7 +55,7 @@ def create_app(
 
     # Read from environment variables with defaults
     db_path = db_path or os.getenv("CHROMA_DB_PATH", "./chroma_db")
-    collection_name = collection_name or os.getenv("COLLECTION_NAME", "ai_documentation")
+    collection_name = collection_name or os.getenv("COLLECTION_NAME", "aggregate")
     embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "google/embeddinggemma-300m")
     host = host or os.getenv("MCP_SERVER_HOST", "0.0.0.0")
     port = port or int(os.getenv("MCP_SERVER_PORT", "3031"))

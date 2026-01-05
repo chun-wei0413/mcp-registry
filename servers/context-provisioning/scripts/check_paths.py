@@ -9,7 +9,7 @@ sys.path.insert(0, str(project_root))
 
 from services.vector_store_service import VectorStoreService
 
-vs = VectorStoreService(db_path=str(project_root / 'chroma_db'), collection_name='ai_documentation')
+vs = VectorStoreService(db_path=str(project_root / 'chroma_db'), collection_name='aggregate')
 print(f'Total Chunks: {vs.collection.count()}')
 
 # 獲取所有資料

@@ -61,7 +61,7 @@ from services.vector_store_service import VectorStoreService
 # 使用預設配置
 vector_store = VectorStoreService(
     db_path="./chroma_db",                              # ChromaDB 儲存路徑
-    collection_name="ai_documentation",                 # 集合名稱
+    collection_name="aggregate",                        # 集合名稱
     embedding_model="google/embeddinggemma-300m"  # 嵌入模型
 )
 ```
@@ -242,9 +242,9 @@ ChromaDB.add(
 支援多個集合以組織不同類型的知識：
 
 ```python
-# 集合 1：AI 文檔索引
+# 集合 1：DDD Aggregate 知識庫（語意完整 Chunking）
 vector_store_ai = VectorStoreService(
-    collection_name="ai_documentation"  # 1,116 chunks
+    collection_name="aggregate"  # 100 chunks
 )
 
 # 集合 2：手動知識庫

@@ -149,34 +149,27 @@ class MarkdownParser:
     @staticmethod
     def chunk_with_code_awareness(content: str, max_chunk_size: int = 4000) -> List[Dict[str, any]]:
         """
-        Chunk markdown content while preserving code block associations.
+        Chunk markdown content by H2 headers (##) - Semantically Complete Chunking.
+
+        Strategy: Each ## section = One Complete Chunk
+        - Each chunk contains: Why (intent) + How (implementation) + Examples (✅/❌)
+        - Code blocks are separated but associated with their descriptions
+        - NO further splitting even if section is large
 
         Each chunk will contain:
         - description: Text-only content (for embedding)
-        - code_blocks: Associated code blocks
-        - is_complete: Whether this is a complete section
+        - code_blocks: Associated code blocks (stored in metadata)
+        - is_complete: Always True (each section is semantically complete)
 
         Args:
             content: The markdown content to chunk
-            max_chunk_size: Maximum size of text content (excluding code)
+            max_chunk_size: Not used, kept for backward compatibility
 
         Returns:
-            List of chunks, each containing description and code_blocks
+            List of chunks, each containing one complete ## section
         """
         # First extract ALL code blocks from the entire content
         full_text_only, all_code_blocks = MarkdownParser.extract_code_blocks(content)
-
-        # If the entire content is small enough, return as single chunk
-        if len(full_text_only) <= max_chunk_size:
-            return [{
-                'description': full_text_only.strip(),
-                'code_blocks': all_code_blocks,
-                'section_title': 'Complete Document',
-                'is_complete': True
-            }]
-
-        # Otherwise, split by H2 headers
-        chunks = []
 
         # Split by ## headers
         h2_pattern = re.compile(r'^##\s+(.+?)$', re.MULTILINE)
@@ -191,14 +184,15 @@ class MarkdownParser:
                 'is_complete': True
             }]
 
-        # Process sections
+        # Process sections - each ## section becomes exactly ONE chunk
+        chunks = []
         sections = []
 
         # Add intro section if exists
         if matches[0].start() > 0:
             intro_text = full_text_only[:matches[0].start()].strip()
             if intro_text:
-                sections.append(('Introduction', intro_text, 0))
+                sections.append(('Introduction', intro_text))
 
         # Add H2 sections
         for i, match in enumerate(matches):
@@ -206,10 +200,10 @@ class MarkdownParser:
             start = match.end()
             end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text_only)
             section_text = full_text_only[start:end].strip()
-            sections.append((section_title, section_text, match.start()))
+            sections.append((section_title, section_text))
 
-        # Create chunks from sections
-        for section_title, section_text, section_start in sections:
+        # Create ONE chunk per section (no further splitting)
+        for section_title, section_text in sections:
             # Find which code blocks belong to this section
             section_codes = []
             for code_block in all_code_blocks:
@@ -217,60 +211,18 @@ class MarkdownParser:
                 if placeholder in section_text:
                     section_codes.append(code_block)
 
-            # Add section header back
-            full_description = f"## {section_title}\n\n{section_text}" if section_title != "Introduction" else section_text
-
-            if len(section_text) <= max_chunk_size:
-                # Section fits in one chunk
-                chunks.append(MarkdownParser._create_chunk(
-                    description=full_description,
-                    code_blocks=section_codes,
-                    section_title=section_title,
-                    is_complete=True
-                ))
+            # Add section header back (except for Introduction)
+            if section_title == "Introduction":
+                full_description = section_text
             else:
-                # Need to split section into multiple chunks
-                # Split by paragraphs
-                paragraphs = section_text.split('\n\n')
-                current_chunk_text = []
-                current_chunk_codes = []
-                current_size = 0
+                full_description = f"## {section_title}\n\n{section_text}"
 
-                for para in paragraphs:
-                    para_size = len(para)
-
-                    if current_size + para_size > max_chunk_size and current_chunk_text:
-                        # Save current chunk
-                        chunk_desc = '\n\n'.join(current_chunk_text)
-                        full_desc = f"## {section_title}\n\n{chunk_desc}"
-                        chunks.append(MarkdownParser._create_chunk(
-                            description=full_desc,
-                            code_blocks=current_chunk_codes,
-                            section_title=section_title,
-                            is_complete=False
-                        ))
-                        current_chunk_text = []
-                        current_chunk_codes = []
-                        current_size = 0
-
-                    current_chunk_text.append(para)
-                    current_size += para_size
-
-                    # Check if this paragraph has code block placeholders
-                    for code_block in section_codes:
-                        placeholder = MarkdownParser._make_placeholder(code_block['position'])
-                        if placeholder in para and code_block not in current_chunk_codes:
-                            current_chunk_codes.append(code_block)
-
-                # Save last chunk
-                if current_chunk_text:
-                    chunk_desc = '\n\n'.join(current_chunk_text)
-                    full_desc = f"## {section_title}\n\n{chunk_desc}"
-                    chunks.append(MarkdownParser._create_chunk(
-                        description=full_desc,
-                        code_blocks=current_chunk_codes,
-                        section_title=section_title,
-                        is_complete=False
-                    ))
+            # Create chunk - always complete, never split
+            chunks.append(MarkdownParser._create_chunk(
+                description=full_description,
+                code_blocks=section_codes,
+                section_title=section_title,
+                is_complete=True  # Always True - each section is semantically complete
+            ))
 
         return chunks

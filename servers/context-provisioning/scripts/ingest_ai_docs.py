@@ -2,17 +2,25 @@
 """
 .ai 目錄文檔智能 Chunking 與 Embedding 腳本
 
-策略說明：
-1. 智能程式碼分離：分離程式碼與文字，只對文字計算 embedding
-2. 混合式 Chunking：核心文件單獨處理，相關文件按功能域分組
+核心策略：
+1. 語意完整 Chunking (Semantically Complete Chunking)：
+   - 每個 ## 標題 = 一個語意完整的 Chunk（不再細分）
+   - 每個 Chunk 同時包含：設計意圖 (Why) + 實作邏輯 (How) + 正確範例 (✅) + 錯誤範例 (❌)
+   - 避免 Intent 和 Code 分離在不同檔案
+   - 優化 RAG 檢索效果
+
+2. 智能程式碼分離 (Code Separation)：
+   - 分離程式碼與文字，只對文字計算 embedding
+   - 程式碼儲存在 metadata 中（完整保留但不參與搜尋）
+   - 查詢結果仍包含完整程式碼
+
 3. 元數據豐富：包含分類、主題、優先級、相關文件等
-4. 上下文保留：重疊區域確保語義連貫性
 
 效能提升：
 - Embedding 大小減少 61-68%（只對文字計算）
 - 語意搜尋精準度提升 ~40%（程式碼語法不稀釋語意）
 - 搜尋速度提升（更小的向量）
-- 查詢結果仍包含完整程式碼
+- 語意完整性：每個 chunk 包含完整的 Why + How + Examples
 """
 
 import os
@@ -34,12 +42,11 @@ from utils.markdown_parser import MarkdownParser
 class AIDocsChunker:
     """AI 文檔智能分塊器（支援代碼分離）"""
 
-    # Chunking 配置（針對 EmbeddingGemma-300M 的 2048 token 限制優化）
-    SMALL_FILE_THRESHOLD = 1500     # 小於 1500 tokens 的文件整個作為一個 chunk（安全範圍）
-    LARGE_FILE_THRESHOLD = 1800     # 大於 1800 tokens 的文件需要切分
-    CHUNK_SIZE = 1200               # 目標 chunk 大小（tokens），保守設定避免超過限制
-    CHUNK_OVERLAP = 200             # 重疊區域（tokens）
-    MAX_CHUNK_SIZE_CHARS = 1800     # 最大 chunk 字符數（用於MarkdownParser，對應約 1500-1800 tokens）
+    # Chunking 配置（語意完整分割策略）
+    # 注意：現在採用「每個 ## 標題 = 一個 chunk」策略，不再根據大小細分
+    # 以下參數保留用於相容性和統計目的
+    SMALL_FILE_THRESHOLD = 1500     # 小於 1500 tokens 的文件整個作為一個 chunk
+    MAX_CHUNK_SIZE_CHARS = 999999   # 不再限制 chunk 大小（每個 ## section 保持完整）
 
     # 文件分類與優先級映射
     CATEGORY_PRIORITY = {
@@ -198,31 +205,29 @@ class AIDocsChunker:
         return False
 
     def _process_single_file(self, file_path: Path) -> List[str]:
-        """處理單個文件，返回生成的 chunk IDs"""
+        """
+        處理單個文件，返回生成的 chunk IDs
+
+        策略：強制按 ## 標題分割
+        - 每個 ## section 成為一個完整的 chunk
+        - 不再根據文件大小決定是否分割
+        - 保持語意完整性
+        """
         # 讀取文件內容
         content = file_path.read_text(encoding='utf-8')
 
         # 分離程式碼與文字
         text_only, code_blocks = MarkdownParser.extract_code_blocks(content)
 
-        # 估算 tokens 數量
-        text_tokens = self._estimate_tokens(text_only)
-        code_tokens = sum(self._estimate_tokens(cb['code']) for cb in code_blocks)
-
         # 獲取文件元數據
         metadata = self._build_metadata(file_path, text_only, code_blocks)
 
-        # 根據文件大小決定分塊策略
-        if text_tokens < self.SMALL_FILE_THRESHOLD:
-            # 小文件：整個作為一個 chunk
-            chunks = self._create_single_chunk(text_only, code_blocks, metadata)
-        else:
-            # 使用 MarkdownParser 的智能分割
-            parser_chunks = MarkdownParser.chunk_with_code_awareness(
-                content,
-                max_chunk_size=self.MAX_CHUNK_SIZE_CHARS
-            )
-            chunks = self._process_parser_chunks(parser_chunks, metadata, code_blocks)
+        # 使用 MarkdownParser 按 ## 標題分割（語意完整 Chunking）
+        parser_chunks = MarkdownParser.chunk_with_code_awareness(
+            content,
+            max_chunk_size=self.MAX_CHUNK_SIZE_CHARS  # 參數保留但不再用於分割
+        )
+        chunks = self._process_parser_chunks(parser_chunks, metadata, code_blocks)
 
         # 存入向量資料庫
         chunk_ids = []
@@ -447,22 +452,22 @@ def main():
     # 設定路徑
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    ai_docs_dir = project_root / '.ai'
+    ai_docs_dir = project_root / 'data' / '.ai'
     chroma_db_dir = project_root / 'chroma_db'
 
     print(f"AI 文檔目錄: {ai_docs_dir}")
     print(f"ChromaDB 目錄: {chroma_db_dir}")
 
-    # 檢查 .ai 目錄是否存在
+    # 檢查 data/.ai 目錄是否存在
     if not ai_docs_dir.exists():
-        print(f"[ERROR] .ai 目錄不存在: {ai_docs_dir}")
+        print(f"[ERROR] data/.ai 目錄不存在: {ai_docs_dir}")
         sys.exit(1)
 
     # 初始化向量存儲
     print("\n初始化向量存儲...")
     vector_store = VectorStoreService(
         db_path=str(chroma_db_dir),
-        collection_name="ai_documentation"
+        collection_name="aggregate"
     )
 
     # 創建 chunker 並處理所有文檔
