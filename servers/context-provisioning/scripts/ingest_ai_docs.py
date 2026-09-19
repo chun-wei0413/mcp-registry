@@ -292,8 +292,13 @@ class AIDocsChunker:
         doc_id = str(uuid.uuid4())
 
         # 僅對文字內容計算 embedding（核心的程式碼分離策略）
+        # 必須走 encode_document()，才會套上 EmbeddingGemma 的 document prompt template；
+        # 直接呼叫 model.encode() 會讓文件與查詢落在不同的語意空間。
         text_content = chunk_data['content']
-        embedding = self.vector_store.model.encode(text_content).tolist()
+        embedding = self.vector_store.encode_document(
+            text_content,
+            title=chunk_data['topic']
+        )
 
         # 合併元數據
         full_metadata = chunk_data['metadata'].copy()

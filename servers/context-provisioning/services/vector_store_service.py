@@ -123,6 +123,39 @@ class VectorStoreService:
         """
         return 1.0 - distance
 
+    def encode_query(self, query: str) -> List[float]:
+        """
+        Encode a search query into an embedding.
+
+        Applies the EmbeddingGemma query prompt template before encoding. All query
+        embeddings must go through this method so the query side stays consistent.
+
+        Args:
+            query (str): The raw query text.
+
+        Returns:
+            List[float]: The query embedding.
+        """
+        return self.model.encode(self._format_query_prompt(query)).tolist()
+
+    def encode_document(self, content: str, title: str = None) -> List[float]:
+        """
+        Encode document content into an embedding.
+
+        Applies the EmbeddingGemma document prompt template before encoding. All
+        document embeddings must go through this method - EmbeddingGemma is an
+        asymmetric retrieval model, so documents indexed without the template will
+        not line up with queries encoded by `encode_query`.
+
+        Args:
+            content (str): The raw document text.
+            title (str, optional): Title used in the prompt template.
+
+        Returns:
+            List[float]: The document embedding.
+        """
+        return self.model.encode(self._format_document_prompt(content, title=title)).tolist()
+
     def add_knowledge(self, topic: str, content: str) -> str:
         """
         Adds a new knowledge point to the vector store.
@@ -137,9 +170,7 @@ class VectorStoreService:
         doc_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
 
-        # Format content with EmbeddingGemma prompt template
-        formatted_content = self._format_document_prompt(content, title=topic)
-        embedding = self.model.encode(formatted_content).tolist()
+        embedding = self.encode_document(content, title=topic)
 
         self.collection.add(
             ids=[doc_id],
@@ -161,9 +192,7 @@ class VectorStoreService:
         Returns:
             List[Dict[str, Any]]: A list of result dictionaries with code blocks.
         """
-        # Format query with EmbeddingGemma prompt template
-        formatted_query = self._format_query_prompt(query)
-        query_embedding = self.model.encode(formatted_query).tolist()
+        query_embedding = self.encode_query(query)
 
         query_params = {
             "query_embeddings": [query_embedding],
