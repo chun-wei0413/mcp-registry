@@ -28,16 +28,23 @@ def register_knowledge_tools(server, vector_store: VectorStoreService):
         Args:
             query: The natural language question to search for.
             top_k: The maximum number of results to return (default: 20).
-            topic: An optional topic to filter the search within.
+            topic: An optional topic to filter the search within. This is an EXACT
+                   match, not a prefix or fuzzy match. Topics created by the ingest
+                   script look like "aggregate - Aggregate 定義與核心概念"
+                   (i.e. "{category} - {section title}"), so passing a bare category
+                   such as "aggregate" returns nothing. Prefer leaving this unset and
+                   relying on semantic search; run scripts/verify_ai_docs.py to list
+                   the topics that actually exist.
 
         Returns:
-            A list of the most relevant knowledge points found, sorted by similarity.
+            A list of the most relevant knowledge points found, ordered from most to
+            least similar. `similarity` is a cosine similarity in [-1, 1], where
+            higher means more similar.
 
         Example:
             search_knowledge(
                 query="How to protect business rules from external modification?",
-                top_k=5,
-                topic="DDD"
+                top_k=5
             )
         """
         search_results = vector_store.search_knowledge(query, top_k, topic)
