@@ -106,6 +106,23 @@ class VectorStoreService:
 
         return result
 
+    @staticmethod
+    def _distance_to_similarity(distance: float) -> float:
+        """
+        Convert a ChromaDB cosine distance into a cosine similarity.
+
+        The collection is created with `hnsw:space: cosine`, so ChromaDB returns
+        distance = 1 - cosine_similarity. Distance lives in [0, 2] (lower is better)
+        while similarity lives in [-1, 1] (higher is better).
+
+        Args:
+            distance (float): The cosine distance reported by ChromaDB.
+
+        Returns:
+            float: The corresponding cosine similarity.
+        """
+        return 1.0 - distance
+
     def add_knowledge(self, topic: str, content: str) -> str:
         """
         Adds a new knowledge point to the vector store.
@@ -165,7 +182,7 @@ class VectorStoreService:
                 doc_id=doc_id,
                 content=results["documents"][0][i],
                 metadata=results["metadatas"][0][i],
-                similarity=results["distances"][0][i]
+                similarity=self._distance_to_similarity(results["distances"][0][i])
             )
             for i, doc_id in enumerate(results["ids"][0])
         ]
